@@ -6,38 +6,23 @@ This wrapper is under development and is nowhere near ready for use. but you can
 The key thing is that I want things as simple as possible. Since events and variables are almost the same thing I have attempted to make the use of WASimCommander easier with this wrapper by treating everything as a sim value and leave SimCom to deal with the differences. 
 It does not matter if you are dealing with a Simconnect Variable or Event. Drill down into Local variables, create your own Events or entire RPN's. Everything is a SimVal. All of the power really comes from WASimCommander. All I do here is to make it very accessible for programmers who want quick results and a small learning curve.
 
-Consisting of the files:
-
-```
-SimCom.cs
-SimVal.cs
-```
-
 Here is a basic example how SimCom is initialised.
 
 ``` C#
-SimCom simCom;
-SimVal Aircraft;
-SimVal HeadingBug;
-SimVal Heading;
-SimVal Radial;
-SimVal GroundAltitude;
-SimVal GearPos;
-
 public MainWindow()
 {
     InitializeComponent();
 
-    simCom = new SimCom(1964);
+    SimCom simCom = new SimCom(1964);
     simCom.OnDataChanged += SimCom_OnDataChanged;
     simCom.connect();
 
-    Aircraft = simCom.GetVariable("Title,string", 2000, 0.0);
-    HeadingBug = simCom.GetVariable("A:AUTOPILOT HEADING LOCK DIR:degrees", 25, 0.01);
-    Heading = simCom.GetVariable("HEADING INDICATOR:degrees", 25, 0.001);
-    Radial = simCom.GetVariable("NAV OBS:1:degrees", 25, 0.01);
-    GroundAltitude = simCom.GetVariable("A:GROUND ALTITUDE,meters");
-    GearPos = simCom.GetVariable("(A:GEAR LEFT POSITION,number) (A:GEAR RIGHT POSITION,number) + (A:GEAR CENTER POSITION,number) +",25, 0.2);
+    simCom.GetVariable("Title,string", 2000, 0.0);
+    simCom.GetVariable("A:AUTOPILOT HEADING LOCK DIR:degrees", 25, 0.01);
+    simCom.GetVariable("HEADING INDICATOR:degrees", 25, 0.001);
+    simCom.GetVariable("NAV OBS:1:degrees", 25, 0.01);
+    simCom.GetVariable("A:GROUND ALTITUDE,meters");
+    simCom.GetVariable("(A:GEAR LEFT POSITION,number) (A:GEAR RIGHT POSITION,number) + (A:GEAR CENTER POSITION,number) +",25, 0.2);
 }
 
 private void SimCom_OnDataChanged(SimCom simCom, SimVal simVal)
@@ -45,34 +30,8 @@ private void SimCom_OnDataChanged(SimCom simCom, SimVal simVal)
     //  You must use Dispatcher.BeginInvoke to jump back to your UI thread.
     Dispatcher.BeginInvoke(new Action(() =>
     {
-        if (simVal == AircraftName) Title = AircraftName.Value;
-        if (simVal == GearPos) renderGearUI();
-        if (simVal == HeadingBug)
-        {
-            HeadingBugIndicator.Angle = HeadingBug.Value;
-            HeadingBugKnob.Angle = HeadingBug.Value * 5;
-        }
-        if (simVal == Heading)
-        {
-            HeadingIndicator.Angle = -Heading.Value;
-            RadialIndicator.Angle = -Heading.Value + Radial.Value;
-        }
-        if (simVal == Radial)
-        {
-            RadialKnob.Angle = Radial.Value * 5;
-            RadialIndicator.Angle = -Heading.Value + Radial.Value;
-        }
+        Console.WriteLine($"{simVal.FullName}: {simVal.Value}\n" + data.Text);
     }));
-}
-
-private void renderInstrument()
-{
-    this.Title = Aircraft.Value;
-    HeadingBugIndicator.Angle = HeadingBug.Value;
-    RadialIndicator.Angle = -Heading.Value + Radial.Value;
-    HeadingIndicator.Angle = -Heading.Value;
-    HeadingBugKnob.Angle = HeadingBug.Value * 5;
-    RadialKnob.Angle = Radial.Value * 5;
 }
 ```
 
