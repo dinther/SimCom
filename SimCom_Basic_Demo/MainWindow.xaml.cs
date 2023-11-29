@@ -34,6 +34,7 @@ namespace SimCom_Basic_Demo
             {
                 data.Text = $"{simVal.FullName}: {simVal.Value}\n" + data.Text;
             }));
+            Console.WriteLine();
         }
     }
 }
