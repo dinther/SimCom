@@ -6,38 +6,23 @@ This wrapper is under development and is nowhere near ready for use. but you can
 The key thing is that I want things as simple as possible. Since events and variables are almost the same thing I have attempted to make the use of WASimCommander easier with this wrapper by treating everything as a sim value and leave SimCom to deal with the differences. 
 It does not matter if you are dealing with a Simconnect Variable or Event. Drill down into Local variables, create your own Events or entire RPN's. Everything is a SimVal. All of the power really comes from WASimCommander. All I do here is to make it very accessible for programmers who want quick results and a small learning curve.
 
-Consisting of the files:
-
-```
-SimCom.cs
-SimVal.cs
-```
-
 Here is a basic example how SimCom is initialised.
 
 ``` C#
-SimCom simCom;
-SimVal Aircraft;
-SimVal HeadingBug;
-SimVal Heading;
-SimVal Radial;
-SimVal GroundAltitude;
-SimVal GearPos;
-
 public MainWindow()
 {
     InitializeComponent();
 
-    simCom = new SimCom(1964);
+    SimCom simCom = new SimCom(1964);
     simCom.OnDataChanged += SimCom_OnDataChanged;
     simCom.connect();
 
-    Aircraft = simCom.GetVariable("Title,string", 2000, 0.0);
-    HeadingBug = simCom.GetVariable("A:AUTOPILOT HEADING LOCK DIR:degrees", 25, 0.01);
-    Heading = simCom.GetVariable("HEADING INDICATOR:degrees", 25, 0.001);
-    Radial = simCom.GetVariable("NAV OBS:1:degrees", 25, 0.01);
-    GroundAltitude = simCom.GetVariable("A:GROUND ALTITUDE,meters");
-    GearPos = simCom.GetVariable("(A:GEAR LEFT POSITION,number) (A:GEAR RIGHT POSITION,number) + (A:GEAR CENTER POSITION,number) +",25, 0.2);
+    simCom.GetVariable("Title,string", 2000, 0.0);
+    simCom.GetVariable("A:AUTOPILOT HEADING LOCK DIR:degrees", 25, 0.01);
+    simCom.GetVariable("HEADING INDICATOR:degrees", 25, 0.001);
+    simCom.GetVariable("NAV OBS:1:degrees", 25, 0.01);
+    simCom.GetVariable("A:GROUND ALTITUDE,meters");
+    simCom.GetVariable("(A:GEAR LEFT POSITION,number) (A:GEAR RIGHT POSITION,number) + (A:GEAR CENTER POSITION,number) +",25, 0.2);
 }
 
 private void SimCom_OnDataChanged(SimCom simCom, SimVal simVal)
@@ -45,39 +30,12 @@ private void SimCom_OnDataChanged(SimCom simCom, SimVal simVal)
     //  You must use Dispatcher.BeginInvoke to jump back to your UI thread.
     Dispatcher.BeginInvoke(new Action(() =>
     {
-        if (simVal == AircraftName) Title = AircraftName.Value;
-        if (simVal == GearPos) renderGearUI();
-        if (simVal == HeadingBug)
-        {
-            HeadingBugIndicator.Angle = HeadingBug.Value;
-            HeadingBugKnob.Angle = HeadingBug.Value * 5;
-        }
-        if (simVal == Heading)
-        {
-            HeadingIndicator.Angle = -Heading.Value;
-            RadialIndicator.Angle = -Heading.Value + Radial.Value;
-        }
-        if (simVal == Radial)
-        {
-            RadialKnob.Angle = Radial.Value * 5;
-            RadialIndicator.Angle = -Heading.Value + Radial.Value;
-        }
+        Console.WriteLine($"{simVal.FullName}: {simVal.Value}\n" + data.Text);
     }));
-}
-
-private void renderInstrument()
-{
-    this.Title = Aircraft.Value;
-    HeadingBugIndicator.Angle = HeadingBug.Value;
-    RadialIndicator.Angle = -Heading.Value + Radial.Value;
-    HeadingIndicator.Angle = -Heading.Value;
-    HeadingBugKnob.Angle = HeadingBug.Value * 5;
-    RadialKnob.Angle = Radial.Value * 5;
 }
 ```
 
-![image](https://github.com/dinther/SimCom/assets/1192916/f983a698-f4ae-4d6d-9b67-75e5eb0df319)
-
+![image](https://github.com/dinther/SimCom/assets/1192916/2efff5ee-0504-415a-8d94-e412e3e19cf9)
 
 Since we have read only variables in Simconnect and variables that can notify when changed and events that can be send and received with data, I decided to consider all events and variables equal. I call them all Simulator Values (SimVal).
 Note how some calls to `client.getVariable` have the optional interval parameters and some don't. In each case it returns a SimVal object but only SimVal's that were given a refresh interval will notify your app when their value changes beyond the given treshold.
@@ -117,8 +75,9 @@ Console.WriteLine(HDGBug.Value);
 You can also pass in the optional interval and deltaEpsilon which still returns the value synchronously but also saves a Data Request in WASimCommander which causes the OnDataChanged event to fire every time that value changes more than deltaEpsilon.
 
 With Winforms and WPF forms you would normally have a threading problem because WASimCommander is running in a different thread than the WPF application. This can be solved in two ways.
-1 - Run a `DispatcherTimer` on the MainWindow and let it update UI related content. This makes it possible to run WASimCommander at a set speed doing nothing more than reading and storing values while users application renders the UI at it's own pace.
-2 - Run all your UI code like this
+
+1. Run a `DispatcherTimer` on the MainWindow and let it update UI related content. This makes it possible to run WASimCommander at a set speed doing nothing more than reading and storing values while users application renders the UI at it's own pace.
+2. Run all your UI code like this
 
 ```
         private void SimCom_OnDataChanged(SimCom simCom, SimVal simVal)
