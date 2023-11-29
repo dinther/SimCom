@@ -35,8 +35,7 @@ private void SimCom_OnDataChanged(SimCom simCom, SimVal simVal)
 }
 ```
 
-![image](https://github.com/dinther/SimCom/assets/1192916/f983a698-f4ae-4d6d-9b67-75e5eb0df319)
-
+![image](https://github.com/dinther/SimCom/assets/1192916/2efff5ee-0504-415a-8d94-e412e3e19cf9)
 
 Since we have read only variables in Simconnect and variables that can notify when changed and events that can be send and received with data, I decided to consider all events and variables equal. I call them all Simulator Values (SimVal).
 Note how some calls to `client.getVariable` have the optional interval parameters and some don't. In each case it returns a SimVal object but only SimVal's that were given a refresh interval will notify your app when their value changes beyond the given treshold.
@@ -76,8 +75,9 @@ Console.WriteLine(HDGBug.Value);
 You can also pass in the optional interval and deltaEpsilon which still returns the value synchronously but also saves a Data Request in WASimCommander which causes the OnDataChanged event to fire every time that value changes more than deltaEpsilon.
 
 With Winforms and WPF forms you would normally have a threading problem because WASimCommander is running in a different thread than the WPF application. This can be solved in two ways.
-1 - Run a `DispatcherTimer` on the MainWindow and let it update UI related content. This makes it possible to run WASimCommander at a set speed doing nothing more than reading and storing values while users application renders the UI at it's own pace.
-2 - Run all your UI code like this
+
+1. Run a `DispatcherTimer` on the MainWindow and let it update UI related content. This makes it possible to run WASimCommander at a set speed doing nothing more than reading and storing values while users application renders the UI at it's own pace.
+2. Run all your UI code like this
 
 ```
         private void SimCom_OnDataChanged(SimCom simCom, SimVal simVal)
