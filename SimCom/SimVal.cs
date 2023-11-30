@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using WASimCommander.CLI.Enums;
 using WASimCommander.CLI.Structs;
 
-namespace SimComCon
+namespace SimComLib
 {
     public class SimVal
     {

@@ -1,0 +1,60 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net6.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <UseWPF>true</UseWPF>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="Gear\Down_Locked.png" />
+    <None Remove="Gear\Down_Transit.png" />
+    <None Remove="Gear\UP_Off.png" />
+    <None Remove="Gear\UP_Transit.png" />
+    <None Remove="HSI\DI_Overlay.png" />
+    <None Remove="HSI\HSI_Back_Course_Flag.png" />
+    <None Remove="HSI\HSI_Face_Plate.png" />
+    <None Remove="HSI\HSI_GS_Needle.png" />
+    <None Remove="HSI\HSI_GS_Scale.png" />
+    <None Remove="HSI\HSI_HDG_Bug.png" />
+    <None Remove="HSI\HSI_HDG_Flag.png" />
+    <None Remove="HSI\HSI_HDG_Knob.png" />
+    <None Remove="HSI\HSI_Nav_Flag.png" />
+    <None Remove="HSI\HSI_Plane_Icon.png" />
+    <None Remove="HSI\HSI_Radial.png" />
+    <None Remove="HSI\HSI_Radial_Knob.png" />
+    <None Remove="HSI\HSI_Radial_Target.png" />
+    <None Remove="HSI\HSI_Rose_Background.png" />
+    <None Remove="HSI\HSI_Rose_Ring.png" />
+    <None Remove="HSI\HSI_Rose_Text.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\SimCom\SimComLib.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Gear\Down_Locked.png" />
+    <Resource Include="Gear\Down_Transit.png" />
+    <Resource Include="Gear\UP_Off.png" />
+    <Resource Include="Gear\UP_Transit.png" />
+    <Resource Include="HSI\DI_Overlay.png" />
+    <Resource Include="HSI\HSI_Back_Course_Flag.png" />
+    <Resource Include="HSI\HSI_Face_Plate.png" />
+    <Resource Include="HSI\HSI_GS_Needle.png" />
+    <Resource Include="HSI\HSI_GS_Scale.png" />
+    <Resource Include="HSI\HSI_HDG_Bug.png" />
+    <Resource Include="HSI\HSI_HDG_Flag.png" />
+    <Resource Include="HSI\HSI_HDG_Knob.png" />
+    <Resource Include="HSI\HSI_Nav_Flag.png" />
+    <Resource Include="HSI\HSI_Plane_Icon.png" />
+    <Resource Include="HSI\HSI_Radial.png" />
+    <Resource Include="HSI\HSI_Radial_Knob.png" />
+    <Resource Include="HSI\HSI_Radial_Target.png" />
+    <Resource Include="HSI\HSI_Rose_Background.png" />
+    <Resource Include="HSI\HSI_Rose_Ring.png" />
+    <Resource Include="HSI\HSI_Rose_Text.png" />
+  </ItemGroup>
+
+</Project>

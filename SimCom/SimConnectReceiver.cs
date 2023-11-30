@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using Microsoft.FlightSimulator.SimConnect;
 using System.Diagnostics;
 
-namespace SimComCon
+namespace SimComLib
 {
     public delegate void SimEventDataHandler(SimVal SimVal, EventArgs e);
     public delegate void SimConnectHandler(SimConnectEventReceiver EventReceiver, bool Connected, EventArgs e);

@@ -5,7 +5,9 @@ VisualStudioVersion = 17.7.34003.232
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SimCom_Basic_Demo", "SimCom_Basic_Demo\SimCom_Basic_Demo.csproj", "{E1AF9BED-F6B0-4686-AA72-8225B2C448A4}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SimComLib", "SimCom\SimComLib.csproj", "{DB4B201C-3EE1-4D3A-8AA5-CB843AF47B08}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SimComLib", "SimCom\SimComLib.csproj", "{DB4B201C-3EE1-4D3A-8AA5-CB843AF47B08}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SimCom_HSI_Demo", "SimCom_HSI_Demo\SimCom_HSI_Demo.csproj", "{9058CBA6-222A-49ED-8501-430A2617B3AB}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +23,10 @@ Global
 		{DB4B201C-3EE1-4D3A-8AA5-CB843AF47B08}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DB4B201C-3EE1-4D3A-8AA5-CB843AF47B08}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{DB4B201C-3EE1-4D3A-8AA5-CB843AF47B08}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9058CBA6-222A-49ED-8501-430A2617B3AB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9058CBA6-222A-49ED-8501-430A2617B3AB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9058CBA6-222A-49ED-8501-430A2617B3AB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9058CBA6-222A-49ED-8501-430A2617B3AB}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

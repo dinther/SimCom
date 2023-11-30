@@ -5,7 +5,7 @@ using WASimCommander.CLI.Enums;
 using WASimCommander.CLI.Structs;
 using WASimCommander.CLI.Client;
 
-namespace SimComCon
+namespace SimComLib
 {
     public delegate void SimComDataEventHandler(SimCom SimCom, SimVal SimVal);
 
