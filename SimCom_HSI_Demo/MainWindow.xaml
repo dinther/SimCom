@@ -49,6 +49,14 @@
                             </Grid.Background>
                         </Grid>
                         <Grid Width="400" Height="400" RenderTransformOrigin="0.5,0.5">
+                            <Grid.RenderTransform>
+                                <TransformGroup>
+                                    <ScaleTransform/>
+                                    <SkewTransform/>
+                                    <RotateTransform/>
+                                    <TranslateTransform x:Name="GSNeedle" Y="0"/>
+                                </TransformGroup>
+                            </Grid.RenderTransform>
                             <Grid.Background>
                                 <ImageBrush ImageSource="/HSI/HSI_GS_Needle.png"/>
                             </Grid.Background>
@@ -148,7 +156,7 @@
                     </Grid>
                     <Grid>
                         <Grid VerticalAlignment="Top" Height="191">
-                            <Button x:Name="AP_Btn" Background="#FF171717" Foreground="#FFA0A0A0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="54" Margin="4,4,0,0" BorderBrush="Lime" ToolTip="Click to toggle">AP</Button>
+                            <Button x:Name="AP_Btn" Background="#FF171717" Foreground="#FFA0A0A0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="54" Margin="4,4,0,0" BorderBrush="Lime" ToolTip="Click to toggle" Click="AP_Btn_Click">AP</Button>
                             <Button x:Name="HDG_Btn" Background="#FF171717" Foreground="#FFC6C6C6" HorizontalAlignment="Right" VerticalAlignment="Top" Width="54" Margin="0,4,4,0" Click="HDG_Btn_Click" ToolTip="Click to toggle">HDG</Button>
                             <Button x:Name="ALT_Btn" Background="#FF171717" Foreground="#FFC6C6C6" HorizontalAlignment="Left" VerticalAlignment="Top" Width="54" Margin="4,35,0,0" Click="ALT_Btn_Click" ToolTip="Click to toggle">ALT</Button>
                             <Button x:Name="VS_Btn" Background="#FF171717" Foreground="#FFC6C6C6" HorizontalAlignment="Left" VerticalAlignment="Top" Width="54" Margin="4,105,0,0" Click="VS_Btn_Click">VS</Button>

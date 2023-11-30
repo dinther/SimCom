@@ -27,6 +27,7 @@ namespace SimCom_HSI_Demo
         private SimVal Radial;
         private SimVal HeadingBug;
         private SimVal CDI;
+        private SimVal GS;
         private SimVal GearDown;
         private SimVal GearUp;
         private SimVal GearSet;
@@ -36,6 +37,7 @@ namespace SimCom_HSI_Demo
         private SimVal HeadingBugSet;
         private SimVal Vor1Set;
         private SimVal APMaster;
+        private SimVal APMaster_CMD;
         private SimVal APHDG;
         private SimVal APHDG_CMD;
         private SimVal APROLL_CMD;
@@ -78,6 +80,7 @@ namespace SimCom_HSI_Demo
             Heading = simCom.GetVariable("HEADING INDICATOR,degrees", 25, 0.1);
             Radial = simCom.GetVariable("NAV OBS:1,degrees", 25, 0.01);
             CDI = simCom.GetVariable("HSI CDI NEEDLE", 50, 0.1);
+            GS = simCom.GetVariable("HSI GSI NEEDLE", 50, 0.1);
             GearDown = simCom.GetVariable("GEAR_DOWN");
             GearUp = simCom.GetVariable("GEAR_UP");
             GearSet = simCom.GetVariable("GEAR_SET");
@@ -86,6 +89,7 @@ namespace SimCom_HSI_Demo
             Vor1Set = simCom.GetVariable("VOR1_SET");
             Vor1Set.Value = Radial.Value;  //  initialise to radial as VOR1_SET is really an event
             APMaster = simCom.GetVariable("AUTOPILOT MASTER", 100);
+            APMaster_CMD = simCom.GetVariable("AP_MASTER");
             APHDG = simCom.GetVariable("AUTOPILOT HEADING LOCK", 100);
             APHDG_CMD = simCom.GetVariable("AP_HDG_HOLD_ON");
             APROLL_CMD = simCom.GetVariable("AP_BANK_HOLD");
@@ -138,6 +142,10 @@ namespace SimCom_HSI_Demo
                 if (simVal == CDI)
                 {
                     RadialNeedle.X = CDI.Value * 0.5;
+                }
+                if (simVal == GS)
+                {
+                    GSNeedle.Y = GS.Value * 0.5;
                 }
                 if (simVal == APALT_VAL)
                 {
@@ -318,6 +326,11 @@ namespace SimCom_HSI_Demo
             } else {
                 APNAV_CMD.Set(0);
             }
+        }
+
+        private void AP_Btn_Click(object sender, RoutedEventArgs e)
+        {
+            APMaster_CMD.Set(1);
         }
     }
 }
