@@ -8,6 +8,8 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="AP\AP_ALT_Knob.png" />
+    <None Remove="AP\AP_VS_Knob.png" />
     <None Remove="Gear\Down_Locked.png" />
     <None Remove="Gear\Down_Transit.png" />
     <None Remove="Gear\UP_Off.png" />
@@ -35,6 +37,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Resource Include="AP\AP_ALT_Knob.png" />
+    <Resource Include="AP\AP_VS_Knob.png" />
     <Resource Include="Gear\Down_Locked.png" />
     <Resource Include="Gear\Down_Transit.png" />
     <Resource Include="Gear\UP_Off.png" />

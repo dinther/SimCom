@@ -65,10 +65,7 @@
                             <Grid RenderTransformOrigin="0.035,0.5" Width="60" Height="20">
                                 <Grid.RenderTransform>
                                     <TransformGroup>
-                                        <ScaleTransform/>
-                                        <SkewTransform/>
                                         <RotateTransform x:Name="BackCourseFlag" Angle="-30"/>
-                                        <TranslateTransform/>
                                     </TransformGroup>
                                 </Grid.RenderTransform>
                                 <Grid.Background>
@@ -81,6 +78,11 @@
                                 </Grid.Background>
                             </Grid>
                             <Grid RenderTransformOrigin="0.5,0.5">
+                                <Grid.RenderTransform>
+                                    <TransformGroup>
+                                        <TranslateTransform x:Name="RadialNeedle" X="-75"/>
+                                    </TransformGroup>
+                                </Grid.RenderTransform>
                                 <Grid.Background>
                                     <ImageBrush ImageSource="/HSI/HSI_Radial.png"/>
                                 </Grid.Background>
@@ -90,10 +92,7 @@
                         <Grid Width="400" Height="400" RenderTransformOrigin="0.25,0.195">
                             <Grid.RenderTransform>
                                 <TransformGroup>
-                                    <ScaleTransform/>
-                                    <SkewTransform/>
                                     <RotateTransform x:Name="NavFlag" Angle="-40"/>
-                                    <TranslateTransform/>
                                 </TransformGroup>
                             </Grid.RenderTransform>
                             <Grid.Background>
@@ -103,10 +102,7 @@
                         <Grid Width="400" Height="400" RenderTransformOrigin="0.746,0.194">
                             <Grid.RenderTransform>
                                 <TransformGroup>
-                                    <ScaleTransform/>
-                                    <SkewTransform/>
                                     <RotateTransform x:Name="HeadingFlag" Angle="40"/>
-                                    <TranslateTransform/>
                                 </TransformGroup>
                             </Grid.RenderTransform>
                             <Grid.Background>
@@ -123,7 +119,7 @@
                                 <ImageBrush ImageSource="/HSI/HSI_Plane_Icon.png"/>
                             </Grid.Background>
                         </Grid>
-                        <Grid x:Name="RadialKnobGrid" RenderTransformOrigin="0.5,0.5" Width="66" Height="66" Margin="11,296,323,38" MouseWheel="RadialKnobGrid_MouseWheel">
+                        <Grid x:Name="RadialKnobGrid" RenderTransformOrigin="0.5,0.5" Width="66" Height="66" Margin="11,296,323,38" MouseWheel="RadialKnobGrid_MouseWheel" ToolTip="Hover and use scrollwheel to adjust">
                             <Grid.RenderTransform>
                                 <TransformGroup>
                                     <ScaleTransform/>
@@ -136,7 +132,7 @@
                                 <ImageBrush ImageSource="/HSI/HSI_Radial_Knob.png"/>
                             </Grid.Background>
                         </Grid>
-                        <Grid x:Name="HeadingBugKnobGrid" RenderTransformOrigin="0.5,0.5" Width="66" Height="66" Margin="324,296,10,38" MouseWheel="HeadingBugKnobGrid_MouseWheel">
+                        <Grid x:Name="HeadingBugKnobGrid" RenderTransformOrigin="0.5,0.5" Width="66" Height="66" Margin="324,296,10,38" MouseWheel="HeadingBugKnobGrid_MouseWheel" ToolTip="Hover and use scrollwheel to adjust">
                             <Grid.RenderTransform>
                                 <TransformGroup>
                                     <ScaleTransform/>
@@ -152,11 +148,39 @@
                     </Grid>
                     <Grid>
                         <Grid VerticalAlignment="Top" Height="191">
-                            <Button x:Name="AP_Btn" Background="#FF171717" Foreground="#FFA0A0A0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="54" Margin="4,4,0,0" BorderBrush="Lime">AP</Button>
-                            <Button x:Name="HDG_Btn" Background="#FF171717" Foreground="#FFC6C6C6" HorizontalAlignment="Right" VerticalAlignment="Top" Width="54" Margin="0,4,4,0" Click="HDG_Btn_Click">HDG</Button>
-                            <Button x:Name="ALT_Btn" Background="#FF171717" Foreground="#FFC6C6C6" HorizontalAlignment="Left" VerticalAlignment="Top" Width="54" Margin="4,35,0,0" Click="ALT_Btn_Click">ALT</Button>
-                            <Button x:Name="VS_Btn" Background="#FF171717" Foreground="#FFC6C6C6" HorizontalAlignment="Right" VerticalAlignment="Top" Width="54" Margin="0,35,4,0" Click="VS_Btn_Click">VS</Button>
-                            <Button x:Name="FLC_Btn" Background="#FF171717" Foreground="#FFC6C6C6" HorizontalAlignment="Left" VerticalAlignment="Top" Width="54" Margin="4,66,0,0" Click="FLC_Btn_Click">FLC</Button>
+                            <Button x:Name="AP_Btn" Background="#FF171717" Foreground="#FFA0A0A0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="54" Margin="4,4,0,0" BorderBrush="Lime" ToolTip="Click to toggle">AP</Button>
+                            <Button x:Name="HDG_Btn" Background="#FF171717" Foreground="#FFC6C6C6" HorizontalAlignment="Right" VerticalAlignment="Top" Width="54" Margin="0,4,4,0" Click="HDG_Btn_Click" ToolTip="Click to toggle">HDG</Button>
+                            <Button x:Name="ALT_Btn" Background="#FF171717" Foreground="#FFC6C6C6" HorizontalAlignment="Left" VerticalAlignment="Top" Width="54" Margin="4,35,0,0" Click="ALT_Btn_Click" ToolTip="Click to toggle">ALT</Button>
+                            <Button x:Name="VS_Btn" Background="#FF171717" Foreground="#FFC6C6C6" HorizontalAlignment="Left" VerticalAlignment="Top" Width="54" Margin="4,105,0,0" Click="VS_Btn_Click">VS</Button>
+                            <Button x:Name="NAV_Btn" Background="#FF171717" Foreground="#FFC6C6C6" HorizontalAlignment="Left" VerticalAlignment="Top" Width="54" Margin="4,168,0,0" ToolTip="Click to toggle" Click="NAV_Btn_Click">NAV</Button>
+                            <Button x:Name="APR_Btn" Background="#FF171717" Foreground="#FFC6C6C6" HorizontalAlignment="Right" VerticalAlignment="Top" Width="54" Margin="0,168,4,0" ToolTip="Click to toggle">APR</Button>
+                            <Button x:Name="FLC_Btn" Background="#FF171717" Foreground="#FFC6C6C6" HorizontalAlignment="Left" VerticalAlignment="Top" Width="54" Margin="4,76,0,0" Click="FLC_Btn_Click" ToolTip="Click to toggle">FLC</Button>
+                            <Grid x:Name="AltKnobGrid" RenderTransformOrigin="0.5,0.5" Width="56" Height="56" Margin="0,0,5,104" VerticalAlignment="Bottom" HorizontalAlignment="Right" MouseWheel="AltKnobGrid_MouseWheel" ToolTip="Hover and use scrollwheel to adjust">
+                                <Grid.RenderTransform>
+                                    <TransformGroup>
+                                        <ScaleTransform/>
+                                        <SkewTransform/>
+                                        <RotateTransform x:Name="AltKnob" Angle="0"/>
+                                        <TranslateTransform/>
+                                    </TransformGroup>
+                                </Grid.RenderTransform>
+                                <Grid.Background>
+                                    <ImageBrush ImageSource="/AP/AP_ALT_Knob.png"/>
+                                </Grid.Background>
+                            </Grid>
+                            <Grid x:Name="VRKnobGrid" RenderTransformOrigin="0.5,0.5" Width="56" Height="56" Margin="0,101,5,0" VerticalAlignment="Top" HorizontalAlignment="Right" MouseWheel="VRKnobGrid_MouseWheel" ToolTip="Hover and use scrollwheel to adjust">
+                                <Grid.RenderTransform>
+                                    <TransformGroup>
+                                        <ScaleTransform/>
+                                        <SkewTransform/>
+                                        <RotateTransform x:Name="VSKnob" Angle="0"/>
+                                        <TranslateTransform/>
+                                    </TransformGroup>
+                                </Grid.RenderTransform>
+                                <Grid.Background>
+                                    <ImageBrush ImageSource="/AP/AP_VS_Knob.png"/>
+                                </Grid.Background>
+                            </Grid>                            
                         </Grid>
                         <Grid x:Name="UpOff" VerticalAlignment="Bottom" Height="206" HorizontalAlignment="Left" Width="129" MouseLeftButtonDown="UpOff_MouseLeftButtonDown">
                             <Grid.Background>

@@ -26,6 +26,7 @@ namespace SimCom_HSI_Demo
         private SimVal Heading;
         private SimVal Radial;
         private SimVal HeadingBug;
+        private SimVal CDI;
         private SimVal GearDown;
         private SimVal GearUp;
         private SimVal GearSet;
@@ -40,11 +41,18 @@ namespace SimCom_HSI_Demo
         private SimVal APROLL_CMD;
         private SimVal APALT;
         private SimVal APALT_CMD;
+        private SimVal APALT_VAL;
         private SimVal APVS;
         private SimVal APVS_CMD;
+        private SimVal APVS_VAL;
+        private SimVal APNAV;
+        private SimVal APNAV_CMD;
+        private SimVal APAPR;
         private SimVal APFLC;
         private SimVal APFLC_CMD;
         private SimVal APPitch_CMD;
+
+
         private DispatcherTimer renderTimer;
         private bool _needRender = true;
         private long lastScroll;
@@ -69,6 +77,7 @@ namespace SimCom_HSI_Demo
             HeadingBug = simCom.GetVariable("A:AUTOPILOT HEADING LOCK DIR,degrees", 25, 0.01);
             Heading = simCom.GetVariable("HEADING INDICATOR,degrees", 25, 0.1);
             Radial = simCom.GetVariable("NAV OBS:1,degrees", 25, 0.01);
+            CDI = simCom.GetVariable("HSI CDI NEEDLE", 50, 0.1);
             GearDown = simCom.GetVariable("GEAR_DOWN");
             GearUp = simCom.GetVariable("GEAR_UP");
             GearSet = simCom.GetVariable("GEAR_SET");
@@ -82,11 +91,18 @@ namespace SimCom_HSI_Demo
             APROLL_CMD = simCom.GetVariable("AP_BANK_HOLD");
             APALT = simCom.GetVariable("AUTOPILOT ALTITUDE LOCK", 100);
             APALT_CMD = simCom.GetVariable("AP_ALT_HOLD");
+            APALT_VAL = simCom.GetVariable("AUTOPILOT ALTITUDE LOCK VAR,feet", 100, 100);
             APFLC = simCom.GetVariable("AUTOPILOT FLIGHT LEVEL CHANGE", 100);
             APFLC_CMD = simCom.GetVariable("FLIGHT_LEVEL_CHANGE");
             APVS = simCom.GetVariable("AUTOPILOT VERTICAL HOLD", 100);
             APVS_CMD = simCom.GetVariable("AP_VS_ON");
+            APVS_VAL = simCom.GetVariable("AUTOPILOT VERTICAL HOLD VAR,feet/minute", 100, 100);
+            APALT_VAL = simCom.GetVariable("AUTOPILOT ALTITUDE LOCK VAR,feet", 100, 100);
+            APNAV = simCom.GetVariable("AUTOPILOT NAV1 LOCK",100);
+            APNAV_CMD = simCom.GetVariable("AP_NAV1_HOLD");
             APPitch_CMD = simCom.GetVariable("AP_PITCH_LEVELER_ON");
+            //
+
             initUI();
         }
 
@@ -99,7 +115,7 @@ namespace SimCom_HSI_Demo
 
         private void SimCom_OnDataChanged(SimCom simCom, SimVal simVal)
         {
-            Debug.WriteLine($"{simVal.Name}: {simVal.Value} : {simVal.OldValue}");
+            //Debug.WriteLine($"{simVal.Name}: {simVal.Value} : {simVal.OldValue}");
             Dispatcher.BeginInvoke(new Action(() =>
             {
                 if (simVal == AircraftName) Title = AircraftName.Value;
@@ -119,11 +135,24 @@ namespace SimCom_HSI_Demo
                     RadialKnob.Angle = Radial.Value * 5;
                     RadialIndicator.Angle = -Heading.Value + Radial.Value;
                 }
+                if (simVal == CDI)
+                {
+                    RadialNeedle.X = CDI.Value * 0.5;
+                }
+                if (simVal == APALT_VAL)
+                {
+                    AltKnob.Angle = -APALT_VAL.Value * 0.1;
+                }
+                if (simVal == APVS_VAL)
+                {
+                    VSKnob.Angle = -APVS_VAL.Value * 2;
+                }
                 if (simVal == APMaster) renderButton(AP_Btn, APMaster.Value == 1);
                 if (simVal == APHDG) renderButton(HDG_Btn, APHDG.Value == 1);
                 if (simVal == APALT) renderButton(ALT_Btn, APALT.Value == 1);
                 if (simVal == APVS) renderButton(VS_Btn, APVS.Value == 1);
                 if (simVal == APFLC) renderButton(FLC_Btn, APFLC.Value == 1);
+                if (simVal == APNAV) renderButton(NAV_Btn, APNAV.Value == 1);
             }));
         }
 
@@ -215,7 +244,15 @@ namespace SimCom_HSI_Demo
             }
             else
             {
-                simVal.Set(Convert.ToDouble(resultText.Text));
+                double val = 0;
+                try
+                {
+                     val = Convert.ToDouble(resultText.Text);  
+                }
+                catch
+                {
+                }
+                simVal.Set(val);
             }
 
             //resultText.Text = $"{simVal.Value}";
@@ -241,6 +278,46 @@ namespace SimCom_HSI_Demo
         private void ALT_Btn_Click(object sender, RoutedEventArgs e)
         {
             APALT_CMD.Set(1);
+        }
+
+        private void AltKnobGrid_MouseWheel(object sender, MouseWheelEventArgs e)
+        {
+            long newTime = Stopwatch.GetTimestamp();
+            long deltaTime = newTime - lastScroll;
+            int step = e.Delta / 120;
+            if (deltaTime < 220000)
+            {
+                step *= 10;
+            }
+            double val = APALT_VAL.Value + (step * 100);
+            double val1 = Math.Round(val / 100) * 100;
+            APALT_VAL.Set(Math.Max(0, val1) );
+            lastScroll = newTime;
+        }
+
+        private void VRKnobGrid_MouseWheel(object sender, MouseWheelEventArgs e)
+        {
+            long newTime = Stopwatch.GetTimestamp();
+            long deltaTime = newTime - lastScroll;
+            int step = e.Delta / 120;
+            if (deltaTime < 220000)
+            {
+                step *= 5;
+            }
+            double val = APVS_VAL.Value + (step * 50);
+            double val1 = Math.Round(val / 50) * 50;
+            APVS_VAL.Set(val1);
+            lastScroll = newTime;
+        }
+
+        private void NAV_Btn_Click(object sender, RoutedEventArgs e)
+        {
+            if (APNAV.Value == 0)
+            {
+                APNAV_CMD.Set(1);
+            } else {
+                APNAV_CMD.Set(0);
+            }
         }
     }
 }
