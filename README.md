@@ -3,7 +3,7 @@ C# Wrapper for the excellent library [WASIMCommander](https://github.com/mpapern
 SimCom allows c# programmers to access the many variables and events in Microsoft flight Simulator 2020. These include all the SimConnect [Variables](https://docs.flightsimulator.com/html/Programming_Tools/SimVars/Simulation_Variables.htm) and [Events](https://docs.flightsimulator.com/html/Programming_Tools/Event_IDs/Event_IDs.htm) but also all the Local variables. More details on the [WASimConnect github](https://github.com/mpaperno/WASimCommander)
 This wrapper is under development and is nowhere near ready for use. but you can play with it, critique it and make suggestions which are very welcome.
 
-![image](https://github.com/dinther/SimCom/assets/1192916/d0a885ab-737f-47ab-ba11-8fdc42c8f42c)
+![image](https://github.com/dinther/SimCom/assets/1192916/737713b5-b064-4d33-9138-6deafd074a94)
 
 I want the API as simple as possible. Since events and variables are almost the same thing I have attempted to make the use of WASimCommander easier with this wrapper by treating everything as a sim value and leave SimCom to deal with the differences. 
 It should not matter if you are dealing with a Simconnect Variable or Event. Drill down into Local variables, create your own Events or entire RPN's. Everything is a SimVal. The power really comes from WASimCommander. All I do here is to make it more accessible for programmers who want quick results and a small learning curve.
