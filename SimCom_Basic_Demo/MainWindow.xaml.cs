@@ -12,7 +12,6 @@ namespace SimCom_Basic_Demo
             SimCom sc = new SimCom(1964);  // 1964 is my birthyear :-) Use any number as an identifier for WASimCommander
             sc.OnDataChanged += SimCom_OnDataChanged;
             sc.Connect();
-
             sc.GetVariable("Title,string", 2000, 0.0);
             sc.GetVariable("A:AUTOPILOT HEADING LOCK DIR:degrees", 25, 0.01);
             sc.GetVariable("HEADING INDICATOR:degrees", 25, 0.001);

@@ -4,7 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:SimCom_Basic_Demo"
-        mc:Ignorable="d" Title="Basic SimCom Demo" Height="450" Width="600">
+        mc:Ignorable="d" Title="SimCom Basic Demo" Height="450" Width="600">
     <Grid>
         <TextBox x:Name="TextBox1" Text="" ScrollViewer.HorizontalScrollBarVisibility="Visible" Margin="10,76,10,10" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto"/>
         <TextBlock Margin="10,10,10,0" TextWrapping="Wrap" Text="SimCom connects with Microsoft Flight Simulator when available and uses WASimcommander and SimConnect to read and write a wide range of variables and events. In this demo Aircraft Title, Heading Bug, Aircraft Heading, NAV1 OBS and Gear position are displayed as they change. " VerticalAlignment="Top"/>

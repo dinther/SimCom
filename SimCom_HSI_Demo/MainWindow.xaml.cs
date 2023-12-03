@@ -54,26 +54,50 @@ namespace SimCom_HSI_Demo
         private SimVal APFLC_CMD;
         private SimVal APPitch_CMD;
 
-
-        private DispatcherTimer renderTimer;
-        private bool _needRender = true;
+        private DispatcherTimer reconnectTimer;
         private long lastScroll;
+        private long lastConnectAttempt;
         public MainWindow()
         {
             InitializeComponent();
 
             simCom = new SimCom(1964);
             simCom.OnDataChanged += SimCom_OnDataChanged;
-
-            try
+            simCom.OnConnection += SimCom_OnConnection;
+            reconnectTimer = new DispatcherTimer();
+            reconnectTimer.Interval = new TimeSpan(0, 0, 0, 1);
+            reconnectTimer.Tick += delegate (object obj, EventArgs evt)
             {
                 simCom.Connect();
-            }
-            catch (SimCom_Exception e)
+            };
+            initVariables();
+        }
+
+        private void Window_Loaded(object sender, RoutedEventArgs e)
+        {
+            simCom.Connect();
+        }
+
+        private void SimCom_OnConnection(SimCom simCom, SimCom_Connection_Status connection_Status)
+        {
+            Dispatcher.BeginInvoke(new Action(() =>
             {
-                statusText.Text = e.Message;
-            }
-            if (!simCom.Connected) { throw new Exception($"Failed to connect with simulator"); }
+                if (connection_Status == SimCom_Connection_Status.CONNECTED)
+                {
+                    reconnectTimer.Stop();
+                    statusText.Text = "Connected";
+                    
+                }
+                else
+                {
+                    statusText.Text = "Connecting ...";
+                    reconnectTimer.Start();
+                }
+            }));
+        }
+
+        private void initVariables()
+        {
             AircraftName = simCom.GetVariable("Title,string", 2000, 0.0);
             GearPos = simCom.GetVariable("(A:GEAR LEFT POSITION,number) (A:GEAR RIGHT POSITION,number) + (A:GEAR CENTER POSITION,number) +", 25, 0.1);
             HeadingBug = simCom.GetVariable("A:AUTOPILOT HEADING LOCK DIR,degrees", 25, 0.01);
@@ -87,7 +111,7 @@ namespace SimCom_HSI_Demo
             GearToggle = simCom.GetVariable("GEAR_TOGGLE");
             HeadingBugSet = simCom.GetVariable("HEADING_BUG_SET", 25, 0.01);
             Vor1Set = simCom.GetVariable("VOR1_SET");
-            Vor1Set.Value = Radial.Value;  //  initialise to radial as VOR1_SET is really an event
+            //Vor1Set.Value = Radial.Value;  //  initialise to radial as VOR1_SET is really an event
             APMaster = simCom.GetVariable("AUTOPILOT MASTER", 100);
             APMaster_CMD = simCom.GetVariable("AP_MASTER");
             APHDG = simCom.GetVariable("AUTOPILOT HEADING LOCK", 100);
@@ -102,27 +126,20 @@ namespace SimCom_HSI_Demo
             APVS_CMD = simCom.GetVariable("AP_VS_ON");
             APVS_VAL = simCom.GetVariable("AUTOPILOT VERTICAL HOLD VAR,feet/minute", 100, 100);
             APALT_VAL = simCom.GetVariable("AUTOPILOT ALTITUDE LOCK VAR,feet", 100, 100);
-            APNAV = simCom.GetVariable("AUTOPILOT NAV1 LOCK",100);
+            APNAV = simCom.GetVariable("AUTOPILOT NAV1 LOCK", 100);
             APNAV_CMD = simCom.GetVariable("AP_NAV1_HOLD");
             APPitch_CMD = simCom.GetVariable("AP_PITCH_LEVELER_ON");
-            //
-
-            initUI();
-        }
-
-        private void initUI()
-        {
-            Title = (string)AircraftName.Value;
-            renderGear();
-            renderInstrument();
         }
 
         private void SimCom_OnDataChanged(SimCom simCom, SimVal simVal)
         {
-            //Debug.WriteLine($"{simVal.Name}: {simVal.Value} : {simVal.OldValue}");
             Dispatcher.BeginInvoke(new Action(() =>
             {
-                if (simVal == AircraftName) Title = AircraftName.Value;
+                if (simVal == AircraftName)
+                {
+                    if (AircraftName.Value != "") Title = AircraftName.Value;
+                    else Title = "SimCom HSI Demo";
+                }
                 if (simVal == GearPos) renderGear();
                 if (simVal == HeadingBug)
                 {
@@ -166,10 +183,10 @@ namespace SimCom_HSI_Demo
 
         private void renderGear()
         {
-            UpOff.Visibility = GearPos.Value == 0 ? Visibility.Visible : Visibility.Hidden;
+            UpOff.Visibility = GearPos.Value < 0.2 ? Visibility.Visible : Visibility.Hidden;
             DownTrans.Visibility = GearPos.Value != 3 && GearPos.Value - GearPos.OldValue > 0 ? Visibility.Visible : Visibility.Hidden;
-            UpTrans.Visibility = GearPos.Value != 0 && GearPos.Value - GearPos.OldValue < 0 ? Visibility.Visible : Visibility.Hidden;
-            DownLocked.Visibility = GearPos.Value == 3.0 ? Visibility.Visible : Visibility.Hidden;
+            UpTrans.Visibility = GearPos.Value > 0.2 && GearPos.Value - GearPos.OldValue < 0 ? Visibility.Visible : Visibility.Hidden;
+            DownLocked.Visibility = GearPos.Value > 2.8 ? Visibility.Visible : Visibility.Hidden;
         }
 
         private void renderInstrument()
@@ -232,6 +249,36 @@ namespace SimCom_HSI_Demo
             lastScroll = newTime;
         }
 
+        private void AltKnobGrid_MouseWheel(object sender, MouseWheelEventArgs e)
+        {
+            long newTime = Stopwatch.GetTimestamp();
+            long deltaTime = newTime - lastScroll;
+            int step = e.Delta / 120;
+            if (deltaTime < 220000)
+            {
+                step *= 10;
+            }
+            double val = APALT_VAL.Value + (step * 100);
+            double val1 = Math.Round(val / 100) * 100;
+            APALT_VAL.Set(Math.Max(0, val1));
+            lastScroll = newTime;
+        }
+
+        private void VRKnobGrid_MouseWheel(object sender, MouseWheelEventArgs e)
+        {
+            long newTime = Stopwatch.GetTimestamp();
+            long deltaTime = newTime - lastScroll;
+            int step = e.Delta / 120;
+            if (deltaTime < 220000)
+            {
+                step *= 5;
+            }
+            double val = APVS_VAL.Value + (step * 50);
+            double val1 = Math.Round(val / 50) * 50;
+            APVS_VAL.Set(val1);
+            lastScroll = newTime;
+        }
+
         private void UpOff_MouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
         {
             GearToggle.Set();
@@ -266,21 +313,15 @@ namespace SimCom_HSI_Demo
             //resultText.Text = $"{simVal.Value}";
         }
 
+        private void AP_Btn_Click(object sender, RoutedEventArgs e)
+        {
+            APMaster_CMD.Set(1);
+        }
+
         private void HDG_Btn_Click(object sender, RoutedEventArgs e)
         {
             if (APHDG.Value == 0) APHDG_CMD.Set(1);
             else APROLL_CMD.Set(1);
-        }
-
-        private void VS_Btn_Click(object sender, RoutedEventArgs e)
-        {
-            if (APVS.Value == 0) APVS_CMD.Set(1);
-            else APPitch_CMD.Set(1);
-        }
-
-        private void FLC_Btn_Click(object sender, RoutedEventArgs e)
-        {
-            APFLC_CMD.Set(1);
         }
 
         private void ALT_Btn_Click(object sender, RoutedEventArgs e)
@@ -288,34 +329,15 @@ namespace SimCom_HSI_Demo
             APALT_CMD.Set(1);
         }
 
-        private void AltKnobGrid_MouseWheel(object sender, MouseWheelEventArgs e)
+        private void FLC_Btn_Click(object sender, RoutedEventArgs e)
         {
-            long newTime = Stopwatch.GetTimestamp();
-            long deltaTime = newTime - lastScroll;
-            int step = e.Delta / 120;
-            if (deltaTime < 220000)
-            {
-                step *= 10;
-            }
-            double val = APALT_VAL.Value + (step * 100);
-            double val1 = Math.Round(val / 100) * 100;
-            APALT_VAL.Set(Math.Max(0, val1) );
-            lastScroll = newTime;
+            APFLC_CMD.Set(1);
         }
 
-        private void VRKnobGrid_MouseWheel(object sender, MouseWheelEventArgs e)
+        private void VS_Btn_Click(object sender, RoutedEventArgs e)
         {
-            long newTime = Stopwatch.GetTimestamp();
-            long deltaTime = newTime - lastScroll;
-            int step = e.Delta / 120;
-            if (deltaTime < 220000)
-            {
-                step *= 5;
-            }
-            double val = APVS_VAL.Value + (step * 50);
-            double val1 = Math.Round(val / 50) * 50;
-            APVS_VAL.Set(val1);
-            lastScroll = newTime;
+            if (APVS.Value == 0) APVS_CMD.Set(1);
+            else APPitch_CMD.Set(1);
         }
 
         private void NAV_Btn_Click(object sender, RoutedEventArgs e)
@@ -326,11 +348,6 @@ namespace SimCom_HSI_Demo
             } else {
                 APNAV_CMD.Set(0);
             }
-        }
-
-        private void AP_Btn_Click(object sender, RoutedEventArgs e)
-        {
-            APMaster_CMD.Set(1);
         }
     }
 }

@@ -19,6 +19,13 @@ namespace SimComLib
         public const uint DATA_TYPE_DOUBLE = 4294967290;
     }
 
+    public enum SimCom_Connection_Status : byte
+    {
+        NOT_CONNECTED = 0,
+        CONNECTED = 1,
+        CONNECTION_FAILED = 2,
+    }
+
     public enum WaSim_ValueTypes : uint
     {
         INT8 = uint.MaxValue,
@@ -53,6 +60,8 @@ namespace SimComLib
         public HR HR { get; }
     }
 
+    public delegate void SimCoMConnectHandler(SimCom simCom, SimCom_Connection_Status Connection_Status);
+
     public class SimCom
     {
         private WASimClient _client;
@@ -63,14 +72,17 @@ namespace SimComLib
         private Dictionary<uint, SimVal> simValIDs = new Dictionary<uint, SimVal>();
         private Dictionary<string, SimVal> simValNames = new Dictionary<string, SimVal>();
         //private Dictionary<string, SimVal> simValFullNames = new Dictionary<string, SimVal>();
-        private byte _connected = 0;
-        public bool Connected
+        private SimCom_Connection_Status _connection_Status = SimCom_Connection_Status.NOT_CONNECTED;
+        public SimCom_Connection_Status Connection_Status
         {
             get
             {
-                return (_connected > 0);
+                return _connection_Status;
             }
         }
+        public event SimCoMConnectHandler OnConnection;
+        private WaSim_Version _version;
+        public WaSim_Version Version { get { return _version;} }
         public WASimClient WASimclient { get { return _client; } }
         public SimCom(uint clientID, uint configIndex = 0)
         {
@@ -85,34 +97,40 @@ namespace SimComLib
             _simConnectEventReceiver.OnConnection += _eventReceiver_OnConnection;
         }
 
-        private void _eventReceiver_OnConnection(SimConnectEventReceiver EventReceiver, bool connected, EventArgs e)
+        private void setConnectionStatus(SimCom_Connection_Status connection_Status)
         {
-            if (connected)
+            if (connection_Status != _connection_Status)
             {
-                _connected++;
-            }
-            else
-            {
-                _connected--;
+                _connection_Status = connection_Status;
+                OnConnection?.Invoke(this, _connection_Status);
             }
         }
 
-        public WaSim_Version Connect()
+        private void _eventReceiver_OnConnection(SimConnectEventReceiver EventReceiver, bool connected, EventArgs e)
+        {
+            if (connected) setConnectionStatus(SimCom_Connection_Status.CONNECTED);
+            else
+            {
+                setConnectionStatus(SimCom_Connection_Status.CONNECTION_FAILED);
+            }
+        }
+
+        public void Connect()
         {
             HR hr;
-            UInt32 version;
-            if ((hr = _client.connectSimulator()) != HR.OK)
-                throw new SimCom_Exception($"Failed to connect to simulator {hr.ToString()}", hr);
-            _connected++;
-            if ((version = _client.pingServer()) == 0)
-                throw new Exception($"Failed to communicate with server {hr.ToString()}");
-            _connected++;
-            if ((hr = _client.connectServer()) != HR.OK)
-                throw new SimCom_Exception($"Failed to connect to server {hr.ToString()}", hr);
-            _connected++;
-            _simConnectEventReceiver.Connect();
-
-            return new WaSim_Version(version);
+            UInt32 version = 0;
+            _connection_Status = SimCom_Connection_Status.NOT_CONNECTED;
+            if ((hr = _client.connectSimulator()) == HR.OK)
+            {
+                if ((version = _client.pingServer()) != 0)
+                {
+                    _version = new WaSim_Version(version);
+                    if ((hr = _client.connectServer()) == HR.OK)
+                    {
+                        _simConnectEventReceiver.Connect();
+                    } else setConnectionStatus(SimCom_Connection_Status.CONNECTION_FAILED);
+                } else setConnectionStatus(SimCom_Connection_Status.CONNECTION_FAILED);
+            } else setConnectionStatus(SimCom_Connection_Status.CONNECTION_FAILED);
         }
 
         public void disconnect()
@@ -121,7 +139,7 @@ namespace SimComLib
             _client.disconnectServer();
             _client.disconnectSimulator();
             _client.Dispose();
-            _connected = 0;
+            setConnectionStatus(SimCom_Connection_Status.NOT_CONNECTED);
         }
 
         public SimVal GetVariable(string variableName, uint interval = 0, double deltaEpsilon = 0.0)
@@ -201,8 +219,13 @@ namespace SimComLib
                     );
                 }
 
-                if ((hr = _client.saveDataRequest(dataRequest)) != HR.OK)
-                    throw new SimCom_Exception($"Failed to subscribe to {type}:{simVal.Name} {hr.ToString()}", hr);
+                hr = _client.saveDataRequest(dataRequest);
+                switch (hr)
+                {
+                    case HR.OK: break;
+                    case HR.NOT_CONNECTED: setConnectionStatus(SimCom_Connection_Status.CONNECTION_FAILED); break;
+                    default: throw new SimCom_Exception($"Failed to subscribe to {type}:{simVal.Name} {hr.ToString()}", hr);
+                }                  
             }
             definitionIndex++;
 
@@ -215,6 +238,7 @@ namespace SimComLib
             if (init)
             {
                 simVal.OldValue = simVal.Value;
+                DoOnDataReceived(simVal);
             }
             return simVal;
         }
@@ -228,8 +252,13 @@ namespace SimComLib
             }
             else
             {
-                if ((hr = _client.setVariable(simVal.VariableRequest, value)) != HR.OK)
-                    throw new SimCom_Exception($"Failed to set variable {simVal.FullName} {hr.ToString()}", hr);
+                hr = _client.setVariable(simVal.VariableRequest, value);
+                switch (hr)
+                {
+                    case HR.OK: break;
+                    case HR.NOT_CONNECTED: setConnectionStatus(SimCom_Connection_Status.CONNECTION_FAILED); break;
+                    default: throw new SimCom_Exception($"Failed to set variable {simVal.FullName} {hr.ToString()}", hr);
+                }
             }
         }
 
@@ -250,9 +279,13 @@ namespace SimComLib
 
         private VariableRequest createVariable(char variableType, string name, string units)
         {
-            HR hr;
-            if ((hr = _client.lookup(variableTypeToLookupItemType(variableType), name, out var localVarId)) != HR.OK)
-                throw new SimCom_Exception($"Failed to lookup Simulator variable {name}. {hr.ToString()}", hr);
+            HR hr = _client.lookup(variableTypeToLookupItemType(variableType), name, out var localVarId);
+            switch (hr)
+            {
+                case HR.OK: break;
+                case HR.NOT_CONNECTED: setConnectionStatus(SimCom_Connection_Status.CONNECTION_FAILED); break;
+                default: throw new SimCom_Exception($"Failed to lookup Simulator variable {name}. {hr.ToString()}", hr);
+            }
             return new VariableRequest(variableType, name, units);
         }
 
@@ -263,24 +296,31 @@ namespace SimComLib
             {
                 var answer = Calc(simVal.Name);
                 simVal.Value = answer;
-            } /*else if (simVal.Units == "STRING")
-            {
-                getCalculatedVariable(simVal);
-            }*/
+            }
             else
             {
                 if (simVal.Type != 'K')
                 {
                     if (simVal.Units == "STRING")
                     {
-                        if ((hr = _client.getVariable(simVal.VariableRequest, out string varResult)) != HR.OK)
-                            throw new SimCom_Exception($"Failed to get variable {simVal.VariableRequest.variableName} {hr.ToString()}", hr);
+                        hr = _client.getVariable(simVal.VariableRequest, out string varResult);
+                        switch (hr)
+                        {
+                            case HR.OK: break;
+                            case HR.NOT_CONNECTED: setConnectionStatus(SimCom_Connection_Status.CONNECTION_FAILED); break;
+                            default: throw new SimCom_Exception($"Failed to get variable {simVal.VariableRequest.variableName} {hr.ToString()}", hr);
+                        }
                         simVal.Value = varResult;
                     }
                     else
                     {
-                        if ((hr = _client.getVariable(simVal.VariableRequest, out double varResult)) != HR.OK)
-                            throw new SimCom_Exception($"Failed to get variable {simVal.VariableRequest.variableName} {hr.ToString()}", hr);
+                        hr = _client.getVariable(simVal.VariableRequest, out double varResult);
+                        switch (hr)
+                        {
+                            case HR.OK: break;
+                            case HR.NOT_CONNECTED: setConnectionStatus(SimCom_Connection_Status.CONNECTION_FAILED); break;
+                            default: throw new SimCom_Exception($"Failed to get variable {simVal.VariableRequest.variableName} {hr.ToString()}", hr);
+                        }
                         simVal.Value = varResult;
                     }
                 }
@@ -290,11 +330,14 @@ namespace SimComLib
 
         public dynamic Calc(string calcCode, bool isString = false)
         {
-            HR hr;
-            if ((hr = _client.executeCalculatorCode(calcCode, CalcResultType.Double, out double fResult, out string sResult)) != HR.OK)
+            HR hr = _client.executeCalculatorCode(calcCode, CalcResultType.Double, out double fResult, out string sResult);
+            switch (hr)
             {
-                throw new SimCom_Exception($"Failed to execute calcCode {calcCode} {hr.ToString()}", hr);
+                case HR.OK: break;
+                case HR.NOT_CONNECTED: setConnectionStatus(SimCom_Connection_Status.CONNECTION_FAILED); break;
+                default: throw new SimCom_Exception($"Failed to execute calcCode {calcCode} {hr.ToString()}", hr);
             }
+
             Debug.WriteLine($"Calculator code '{calcCode}' returned: {fResult} and '{sResult}'");
             if (isString)
             {

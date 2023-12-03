@@ -4,7 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:SimCom_HSI_Demo"
-        mc:Ignorable="d" Title="MainWindow" Height="600" Width="600" Background="#FF373737">
+        mc:Ignorable="d" Title="MainWindow" Height="600" Width="600" Background="#FF373737" Loaded="Window_Loaded">
     <Grid>
         <StackPanel>
             <Viewbox>
@@ -156,7 +156,7 @@
                     </Grid>
                     <Grid>
                         <Grid VerticalAlignment="Top" Height="191">
-                            <Button x:Name="AP_Btn" Background="#FF171717" Foreground="#FFA0A0A0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="54" Margin="4,4,0,0" BorderBrush="Lime" ToolTip="Click to toggle" Click="AP_Btn_Click">AP</Button>
+                            <Button x:Name="AP_Btn" Background="#FF171717" Foreground="#FFA0A0A0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="54" Margin="4,4,0,0"  ToolTip="Click to toggle" Click="AP_Btn_Click">AP</Button>
                             <Button x:Name="HDG_Btn" Background="#FF171717" Foreground="#FFC6C6C6" HorizontalAlignment="Right" VerticalAlignment="Top" Width="54" Margin="0,4,4,0" Click="HDG_Btn_Click" ToolTip="Click to toggle">HDG</Button>
                             <Button x:Name="ALT_Btn" Background="#FF171717" Foreground="#FFC6C6C6" HorizontalAlignment="Left" VerticalAlignment="Top" Width="54" Margin="4,35,0,0" Click="ALT_Btn_Click" ToolTip="Click to toggle">ALT</Button>
                             <Button x:Name="VS_Btn" Background="#FF171717" Foreground="#FFC6C6C6" HorizontalAlignment="Left" VerticalAlignment="Top" Width="54" Margin="4,105,0,0" Click="VS_Btn_Click">VS</Button>
@@ -225,7 +225,7 @@
                 <Button Width="60" HorizontalAlignment="Right" Margin="0,4,4,0" VerticalAlignment="Top" Click="GetButton_Click">Get</Button>
                 <TextBox x:Name="resultText" VerticalAlignment="Top" Margin="4,32,70,0" Background="White"/>
                 <Button Width="60" HorizontalAlignment="Right" Margin="0,32,4,0" VerticalAlignment="Top" Click="SetButton_Click">Set</Button>
-                <TextBlock x:Name="statusText" VerticalAlignment="Top" Margin="4,58,4,0" Foreground="White" Background="#FFD9D9D9"></TextBlock>
+                <TextBlock x:Name="statusText" VerticalAlignment="Top" Margin="4,58,4,0" Foreground="Black" Background="#FFD9D9D9"></TextBlock>
             </Grid>
         </StackPanel>
     </Grid>
