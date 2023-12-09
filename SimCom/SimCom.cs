@@ -117,20 +117,22 @@ namespace SimComLib
 
         public void Connect()
         {
-            HR hr;
-            UInt32 version = 0;
-            _connection_Status = SimCom_Connection_Status.NOT_CONNECTED;
-            if ((hr = _client.connectSimulator()) == HR.OK)
-            {
-                if ((version = _client.pingServer()) != 0)
+            if (_connection_Status != SimCom_Connection_Status.CONNECTED) {
+                HR hr;
+                UInt32 version = 0;
+                _connection_Status = SimCom_Connection_Status.NOT_CONNECTED;
+                if ((hr = _client.connectSimulator()) == HR.OK)
                 {
-                    _version = new WaSim_Version(version);
-                    if ((hr = _client.connectServer()) == HR.OK)
+                    if ((version = _client.pingServer()) != 0)
                     {
-                        _simConnectEventReceiver.Connect();
+                        _version = new WaSim_Version(version);
+                        if ((hr = _client.connectServer()) == HR.OK)
+                        {
+                            _simConnectEventReceiver.Connect();
+                        } else setConnectionStatus(SimCom_Connection_Status.CONNECTION_FAILED);
                     } else setConnectionStatus(SimCom_Connection_Status.CONNECTION_FAILED);
                 } else setConnectionStatus(SimCom_Connection_Status.CONNECTION_FAILED);
-            } else setConnectionStatus(SimCom_Connection_Status.CONNECTION_FAILED);
+            }
         }
 
         public void disconnect()
@@ -391,7 +393,7 @@ namespace SimComLib
         {
             if (simVal != null)
             {
-                Console.WriteLine(simVal.FullName);
+                //Console.WriteLine(simVal.FullName);
                 OnDataChanged?.Invoke(this, simVal);
             }
         }
