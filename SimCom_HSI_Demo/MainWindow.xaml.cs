@@ -66,7 +66,7 @@ namespace SimCom_HSI_Demo
             simCom.OnConnection += SimCom_OnConnection;
             reconnectTimer = new DispatcherTimer();
             reconnectTimer.Interval = new TimeSpan(0, 0, 0, 1);
-            reconnectTimer.Tick += delegate (object obj, EventArgs evt)
+            reconnectTimer.Tick += delegate (object? obj, EventArgs evt)
             {
                 simCom.Connect();
             };
@@ -98,35 +98,36 @@ namespace SimCom_HSI_Demo
 
         private void initVariables()
         {
-            AircraftName = simCom.GetVariable("Title,string", 2000, 0.0);
-            GearPos = simCom.GetVariable("(A:GEAR LEFT POSITION,number) (A:GEAR RIGHT POSITION,number) + (A:GEAR CENTER POSITION,number) +", 25, 0.1);
-            HeadingBug = simCom.GetVariable("A:AUTOPILOT HEADING LOCK DIR,degrees", 25, 0.01);
-            Heading = simCom.GetVariable("HEADING INDICATOR,degrees", 25, 0.1);
-            Radial = simCom.GetVariable("NAV OBS:1,degrees", 25, 0.01);
-            CDI = simCom.GetVariable("HSI CDI NEEDLE", 50, 0.1);
-            GS = simCom.GetVariable("HSI GSI NEEDLE", 50, 0.1);
+            Radial = simCom.GetVariable("A:NAV OBS:1,degrees,25,0.01");
+            AircraftName = simCom.GetVariable("Title,string,2000, 0.0");
+            GearPos = simCom.GetVariable("(A:GEAR LEFT POSITION,number) (A:GEAR RIGHT POSITION,number) + (A:GEAR CENTER POSITION,number) +,25, 0.1");
+            HeadingBug = simCom.GetVariable("A:AUTOPILOT HEADING LOCK DIR,degrees,25, 0.01");
+            Heading = simCom.GetVariable("HEADING INDICATOR,degrees, 25, 0.1");
+
+            CDI = simCom.GetVariable("HSI CDI NEEDLE, 50, 0.1");
+            GS = simCom.GetVariable("HSI GSI NEEDLE, 50, 0.1");
             GearDown = simCom.GetVariable("GEAR_DOWN");
             GearUp = simCom.GetVariable("GEAR_UP");
             GearSet = simCom.GetVariable("GEAR_SET");
             GearToggle = simCom.GetVariable("GEAR_TOGGLE");
-            HeadingBugSet = simCom.GetVariable("HEADING_BUG_SET", 25, 0.01);
+            HeadingBugSet = simCom.GetVariable("HEADING_BUG_SET, 25, 0.01");
             Vor1Set = simCom.GetVariable("VOR1_SET");
             //Vor1Set.Value = Radial.Value;  //  initialise to radial as VOR1_SET is really an event
-            APMaster = simCom.GetVariable("AUTOPILOT MASTER", 100);
+            APMaster = simCom.GetVariable("AUTOPILOT MASTER, 100");
             APMaster_CMD = simCom.GetVariable("AP_MASTER");
-            APHDG = simCom.GetVariable("AUTOPILOT HEADING LOCK", 100);
+            APHDG = simCom.GetVariable("AUTOPILOT HEADING LOCK, 100");
             APHDG_CMD = simCom.GetVariable("AP_HDG_HOLD_ON");
             APROLL_CMD = simCom.GetVariable("AP_BANK_HOLD");
-            APALT = simCom.GetVariable("AUTOPILOT ALTITUDE LOCK", 100);
+            APALT = simCom.GetVariable("AUTOPILOT ALTITUDE LOCK, 100");
             APALT_CMD = simCom.GetVariable("AP_ALT_HOLD");
-            APALT_VAL = simCom.GetVariable("AUTOPILOT ALTITUDE LOCK VAR,feet", 100, 100);
-            APFLC = simCom.GetVariable("AUTOPILOT FLIGHT LEVEL CHANGE", 100);
+            APALT_VAL = simCom.GetVariable("AUTOPILOT ALTITUDE LOCK VAR,feet, 100, 100");
+            APFLC = simCom.GetVariable("AUTOPILOT FLIGHT LEVEL CHANGE, 100");
             APFLC_CMD = simCom.GetVariable("FLIGHT_LEVEL_CHANGE");
-            APVS = simCom.GetVariable("AUTOPILOT VERTICAL HOLD", 100);
+            APVS = simCom.GetVariable("AUTOPILOT VERTICAL HOLD, 100");
             APVS_CMD = simCom.GetVariable("AP_VS_ON");
-            APVS_VAL = simCom.GetVariable("AUTOPILOT VERTICAL HOLD VAR,feet/minute", 100, 100);
-            APALT_VAL = simCom.GetVariable("AUTOPILOT ALTITUDE LOCK VAR,feet", 100, 100);
-            APNAV = simCom.GetVariable("AUTOPILOT NAV1 LOCK", 100);
+            APVS_VAL = simCom.GetVariable("AUTOPILOT VERTICAL HOLD VAR,feet/minute, 100, 100");
+            APALT_VAL = simCom.GetVariable("AUTOPILOT ALTITUDE LOCK VAR,feet, 100, 100");
+            APNAV = simCom.GetVariable("AUTOPILOT NAV1 LOCK, 100");
             APNAV_CMD = simCom.GetVariable("AP_NAV1_HOLD");
             APPitch_CMD = simCom.GetVariable("AP_PITCH_LEVELER_ON");
         }

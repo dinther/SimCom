@@ -1,9 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using WASimCommander.CLI.Enums;
 using WASimCommander.CLI.Structs;
 using WASimCommander.CLI.Client;
+
+//  SimCom is a wrapper around WASimCommander and SimConnect designed to make the API easier to use.
+//  Variables and events are interacted with using the SimVal class.
+//  SimCom is a work in progress and is not yet ready for production use.
+//  SimCom is released under the MIT license.
+//
+//  https://github.com/dinther/SimCom
+//  SimCom is written by Paul van Dinther.
 
 namespace SimComLib
 {
@@ -97,13 +103,14 @@ namespace SimComLib
             _simConnectEventReceiver.OnConnection += _eventReceiver_OnConnection;
         }
 
-        private void setConnectionStatus(SimCom_Connection_Status connection_Status)
+        private bool setConnectionStatus(SimCom_Connection_Status connection_Status)
         {
             if (connection_Status != _connection_Status)
             {
                 _connection_Status = connection_Status;
                 OnConnection?.Invoke(this, _connection_Status);
             }
+            return connection_Status == SimCom_Connection_Status.CONNECTED;
         }
 
         private void _eventReceiver_OnConnection(SimConnectEventReceiver EventReceiver, bool connected, EventArgs e)
@@ -115,7 +122,7 @@ namespace SimComLib
             }
         }
 
-        public void Connect()
+        public bool Connect()
         {
             if (_connection_Status != SimCom_Connection_Status.CONNECTED) {
                 HR hr;
@@ -129,10 +136,11 @@ namespace SimComLib
                         if ((hr = _client.connectServer()) == HR.OK)
                         {
                             _simConnectEventReceiver.Connect();
-                        } else setConnectionStatus(SimCom_Connection_Status.CONNECTION_FAILED);
-                    } else setConnectionStatus(SimCom_Connection_Status.CONNECTION_FAILED);
-                } else setConnectionStatus(SimCom_Connection_Status.CONNECTION_FAILED);
+                        } else return setConnectionStatus(SimCom_Connection_Status.CONNECTION_FAILED);
+                    } else return setConnectionStatus(SimCom_Connection_Status.CONNECTION_FAILED);
+                } else return setConnectionStatus(SimCom_Connection_Status.CONNECTION_FAILED);
             }
+            return true;
         }
 
         public void disconnect()
@@ -144,7 +152,7 @@ namespace SimComLib
             setConnectionStatus(SimCom_Connection_Status.NOT_CONNECTED);
         }
 
-        public SimVal GetVariable(string variableName, uint interval = 0, double deltaEpsilon = 0.0)
+        public SimVal GetVariable(string variableName)
         {
             SimVal simVal;
             bool init = false;
@@ -164,7 +172,7 @@ namespace SimComLib
                 init = true;
             }
 
-            if (simVal.Type != 'K' && interval != 0)
+            if (simVal.Type != 'K' && simVal.Interval != 0)
             {
                 UpdatePeriod updatePeriod = UpdatePeriod.Millisecond;
                 char type = (simVal.Type == 'A' && simVal.Units != "") ? '\0' : simVal.Type;
@@ -179,8 +187,8 @@ namespace SimComLib
                         calculatorCode: simVal.FullName,
                         valueSize: (uint)WaSim_ValueTypes.FLOAT,
                         period: updatePeriod,
-                        interval: Math.Max(interval, 25),
-                        deltaEpsilon: (float)Math.Max(0, deltaEpsilon)
+                        interval: Math.Max(simVal.Interval, 25),
+                        deltaEpsilon: (float)Math.Max(0, simVal.DeltaEpsilon)
                     );
                 }
                 else if (simVal.Units == "STRING")
@@ -191,7 +199,7 @@ namespace SimComLib
                         calculatorCode: $"({simVal.FullName})",
                         valueSize: 32,
                         period: updatePeriod,
-                        interval: Math.Max(interval, 25),
+                        interval: Math.Max(simVal.Interval, 25),
                         deltaEpsilon: 0.0f
                     );
                 }
@@ -204,8 +212,8 @@ namespace SimComLib
                         simVarIndex: simVal.Index,
                         valueSize: (uint)WaSim_ValueTypes.FLOAT,// (uint)4294967291,
                         period: updatePeriod,
-                        interval: Math.Max(interval, 25),
-                        deltaEpsilon: (float)Math.Max(0, deltaEpsilon)
+                        interval: Math.Max(simVal.Interval, 25),
+                        deltaEpsilon: (float)Math.Max(0, simVal.DeltaEpsilon)
                     );
                 }
                 else
@@ -216,8 +224,8 @@ namespace SimComLib
                         variableName: simVal.Name,
                         valueSize: (uint)4294967291,
                         period: updatePeriod,
-                        interval: Math.Max(interval, 25),
-                        deltaEpsilon: (float)Math.Max(0, deltaEpsilon)
+                        interval: Math.Max(simVal.Interval, 25),
+                        deltaEpsilon: (float)Math.Max(0, simVal.DeltaEpsilon)
                     );
                 }
 
@@ -394,7 +402,11 @@ namespace SimComLib
             if (simVal != null)
             {
                 //Console.WriteLine(simVal.FullName);
-                OnDataChanged?.Invoke(this, simVal);
+                if (!simVal.Initialised || simVal.OldValue != simVal.Value)
+                {
+                    OnDataChanged?.Invoke(this, simVal);
+                }
+                simVal.SetInitialised();
             }
         }
 

@@ -87,7 +87,7 @@ namespace SimComLib
                 }
                 else
                 {
-                    throw e;
+                    throw;
                 }
             }
             return false;
