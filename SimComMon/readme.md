@@ -2,7 +2,7 @@
 SimComMon is a command line demo app to showcase the SimCom library.
 Pass all the variables you want to monitor as command line arguments.
 
-```SimComMon.exe "A:NAV OBS:1,degrees,25,1" "HEADING INDICATOR,degrees, 25, 0.1" "TITLE,string"```
+```SimComMon.exe "A:NAV OBS:1,degrees,25,1" "HEADING INDICATOR,degrees,25,0.1" "TITLE,string,500"```
 
 Variable name strings consist of 6 parts: Type, Name, Index, Units, Interval, deltaEpsilon
 
