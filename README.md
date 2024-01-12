@@ -19,12 +19,12 @@ public MainWindow()
     simCom.OnDataChanged += SimCom_OnDataChanged;
     simCom.connect();
 
-    simCom.GetVariable("Title,string", 2000, 0.0);
-    simCom.GetVariable("A:AUTOPILOT HEADING LOCK DIR:degrees", 25, 0.01);
-    simCom.GetVariable("HEADING INDICATOR:degrees", 25, 0.001);
-    simCom.GetVariable("NAV OBS:1:degrees", 25, 0.01);
+    simCom.GetVariable("Title,string, 2000, 0.0");
+    simCom.GetVariable("A:AUTOPILOT HEADING LOCK DIR:degrees, 25, 0.01");
+    simCom.GetVariable("HEADING INDICATOR:degrees, 25, 0.001");
+    simCom.GetVariable("NAV OBS:1:degrees, 25, 0.01");
     simCom.GetVariable("A:GROUND ALTITUDE,meters");
-    simCom.GetVariable("(A:GEAR LEFT POSITION,number) (A:GEAR RIGHT POSITION,number) + (A:GEAR CENTER POSITION,number) +",25, 0.2);
+    simCom.GetVariable("(A:GEAR LEFT POSITION,number) (A:GEAR RIGHT POSITION,number) + (A:GEAR CENTER POSITION,number) +,25, 0.2");
 }
 
 private void SimCom_OnDataChanged(SimCom simCom, SimVal simVal)
@@ -46,14 +46,16 @@ This same SimVal object can also be used to set a value. for example `HeadingBug
 
 You don't have to worry about what type they are, (A: B: K: ect.) this can just be part of the name or you can rely on their simconnect defaults of A: or K: . Variable name can have up to 4 parts separated by a colons or a comma 
 
-`Type:Name:Index,Units`
+`Type:Name:Index,Units,Interval,deltaEpsilon`
 
 | Part | Description|
 | ------------- | ------------- |
 |Type|(Optional, A or K by default depends on the spaces or underscores in the name)|
-|Name|(Required)|
-|Index|(Optional, 0 by default)|
-|Units|(Optional, empty string by default)|
+|Name|(Required) The name of the variable or event or Reverse Polish Notation.|
+|Index|(Optional, 255 by default)Sometimes sim variables are used for multiple identical systems referred to by this index.|
+|Units|(Optional, empty string by default) The units to be used for the variable|
+|Interval|(Optional 0 by default) frequency the variable is scanned in ms.|
+|deltaEpsilon|(Optional 0 by default) The amount a variable must change before a notification event is fired.|
 
 examples:
 
