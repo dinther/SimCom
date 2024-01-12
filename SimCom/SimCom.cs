@@ -86,8 +86,8 @@ namespace SimComLib
                 return _connection_Status;
             }
         }
-        public event SimCoMConnectHandler OnConnection;
-        private WaSim_Version _version;
+        public event SimCoMConnectHandler? OnConnection;
+        private WaSim_Version? _version;
         public WaSim_Version Version { get { return _version;} }
         public WASimClient WASimclient { get { return _client; } }
         public SimCom(uint clientID, uint configIndex = 0)
@@ -152,6 +152,17 @@ namespace SimComLib
             setConnectionStatus(SimCom_Connection_Status.NOT_CONNECTED);
         }
 
+
+        //  GetVariable The variableName string consist of 6 parts: 'Type':"Name":Index,"Units",Interval,deltaEpsilon
+        //
+        //  Example: "A:NAV OBS:1,degrees,1000,0.1"
+        //
+        //  Type            Optional. Char - Defines the variable type.
+        //  Name            Required. String - Name of the Variable or Full Reverse Polish Notation calculations.
+        //  Index           Optional. Integer - Some variables use an additional index. For example: A:NAV OBS:1 (Nav radio 1)
+        //  Units           Optional. String - Units of the variable. For example: degrees, feet, knots, etc. Default type is "NUMBER"
+        //  Interval        Optional. Integer - Interval in milliseconds to monitor the variable. Default is 0 (The variable is read once)
+        //  deltaEpsilon    Optional. Float - The minimum change in value to trigger a notification. Default is 0 (Any change in value triggers a notification)
         public SimVal GetVariable(string variableName)
         {
             SimVal simVal;
@@ -177,7 +188,7 @@ namespace SimComLib
                 UpdatePeriod updatePeriod = UpdatePeriod.Millisecond;
                 char type = (simVal.Type == 'A' && simVal.Units != "") ? '\0' : simVal.Type;
 
-                DataRequest dataRequest = null;
+                DataRequest? dataRequest = null;
                 HR hr;
                 if (simVal.IsRPN)
                 {
@@ -209,7 +220,7 @@ namespace SimComLib
                         requestId: definitionIndex,
                         simVarName: simVal.Name,
                         unitName: simVal.Units,
-                        simVarIndex: simVal.Index,
+                        simVarIndex: simVal.Index==255? (Byte)0 : simVal.Index,
                         valueSize: (uint)WaSim_ValueTypes.FLOAT,// (uint)4294967291,
                         period: updatePeriod,
                         interval: Math.Max(simVal.Interval, 25),
@@ -388,6 +399,7 @@ namespace SimComLib
                 {
                     simVal.OldValue = simVal.Value;
                     simVal.Value = value;
+                    simVal.DoOnChanged();
                     DoOnDataReceived(simVal);
                 }
             }

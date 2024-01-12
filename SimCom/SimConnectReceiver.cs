@@ -26,11 +26,11 @@ namespace SimComLib
         private uint _configIndex;
         private uint _clientID;
 
-        private Task _messageWaitTask;
+        private Task? _messageWaitTask;
         private bool _connected = false;
         private bool _connecting = false;
 
-        private SimConnect _simConnect;
+        private SimConnect? _simConnect;
 
         private readonly EventWaitHandle _scReady = new EventWaitHandle(false, EventResetMode.AutoReset);
 
@@ -125,8 +125,8 @@ namespace SimComLib
         }
 
         public bool Connected { get { return _connected; } }
-        public event SimConnectHandler OnConnection;
-        public event SimEventDataHandler OnEvent;
+        public event SimConnectHandler? OnConnection;
+        public event SimEventDataHandler? OnEvent;
 
         private void ReceiveMessages()
         {

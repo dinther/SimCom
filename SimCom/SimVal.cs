@@ -11,7 +11,7 @@ namespace SimComLib
 {
     public class SimVal
     {
-        private SimCom _simCom = null;
+        private SimCom? _simCom = null;
         private uint _valIndex;
         private char _type;
         private string _name;
@@ -23,8 +23,16 @@ namespace SimComLib
         private string _fullName;
         private bool _isRPN;
         private bool _initialised = false;
-
+        private float _lastHighSpeedAdjustValue = 0;
+        private float _lastHighSpeedTime;
+        private DateTime dStartTime = DateTime.Now;
         private VariableRequest _variableRequest;
+        public float GetTimestampInSeconds()
+        {
+            DateTime now = DateTime.Now;
+            TimeSpan timeSpan = now - dStartTime;
+            return (float)timeSpan.TotalSeconds;
+        }
         public SimVal(SimCom simCom, string variableName, uint valIndex)
         {
             _simCom = simCom;
@@ -66,7 +74,7 @@ namespace SimComLib
                 _nameIndex = (_index > 0 && _index < 255) ? _name + ':' + _index.ToString() : _name;
                 _variableRequest = new VariableRequest(_type, _nameIndex, _units);
                 _fullName = $"{_type}:{_name}";
-                if (_index > 0 && _index < 255) _fullName += ":" + _index.ToString();  //  _indexes are never 0 (I think)
+                if (_index > 0 && _index < 255) _fullName += ":" + _index.ToString();  //  _indexes are never 255 (I think)
                 if (_units.Length > 0) _fullName += "," + _units;
             }
         }
@@ -83,21 +91,100 @@ namespace SimComLib
         public bool IsRPN { get { return _isRPN; } }
         public dynamic Value;
         public dynamic OldValue;
+        public string Text {  get { return Value.ToString(); } }
+        public string Format(string format = "", float displayScaler = 1)
+        {
+            return String.Format(format, Value * displayScaler);
+        }
         public bool Initialised { get { return _initialised; } }
 
-        public void Set()
+        public dynamic Set()
         {
             _simCom.setVariable(this, Value);
-            //_initialised = true;
+            return Value;
         }
 
-        public void Set(dynamic Value)
+        public dynamic Set(dynamic Value)
         {
             _simCom.setVariable(this, Value);
             OldValue = Value;
             this.Value = Value;
-            //_initialised = true;
+            return Value;
         }
+
+        public dynamic Adj(dynamic Value)
+        {
+            return Set(this.Value +=Value);
+        }
+
+        //  This is a rather powerful value adjust function designed to be used with rotary encoders that return relative change.
+        //  The Rotary encoder is expected to send an integer representing the number of steps it turned since the last report.
+        //  this value is either negative (CCW) or positive (CW). The magnitude of the value represents how fast the knob was turned.
+        //  
+        //  This function makes use of this speed indication and allows for a slow and fast mode.
+        //  Depending on the mode slow or fast multipliers and rounding targets are used.
+        //  You can also define the treshold between slow and fast.
+        //
+        //  Dropping back from fast to slow mode happens when no input has been received fopr a set amount of time. This is 0.6 seconds by default.
+        //  It is also possible to use this function in absolute mode. In this mode the adjustvalue is either -1, 0 or 1.
+        //  this means that the Value will be adjusted by the appropriate multiplier.
+        //
+        //  The slowNearest and fastNearest parameters allow you to define the rounding target for slow and fast mode.
+        //  Typically you want to round to the the same values as the multiplier.
+
+        public dynamic Adj(float adjustValue, float slowFastTreshold, float slowMultiplier, float fastMultiplier, float slowNearest, float fastNearest, float min, float max, bool loopRange = false, bool absoluteMode=false, float fastFallBackTime = 0.6f)
+        {
+            float step;
+            float multiplier;
+            float nearest;
+            if (Math.Abs(adjustValue) > slowFastTreshold)
+            {
+                _lastHighSpeedAdjustValue = Math.Abs(adjustValue);
+                _lastHighSpeedTime = GetTimestampInSeconds();
+                multiplier = fastMultiplier;
+                nearest = fastNearest;
+            }
+            else
+            {
+                float nowTime = GetTimestampInSeconds();
+                float timeSinceLastHighSpeedMode = nowTime - _lastHighSpeedTime;
+                if (timeSinceLastHighSpeedMode < fastFallBackTime)
+                {
+                    adjustValue = (adjustValue < 0 ? -1 : adjustValue > 0 ? 1 : 0) * Math.Abs(_lastHighSpeedAdjustValue);
+                    multiplier = fastMultiplier;
+                    nearest = fastNearest;
+                    _lastHighSpeedTime = nowTime;
+                }
+                else
+                {
+                    multiplier = slowMultiplier;
+                    nearest = slowNearest;
+                }
+            }
+            if (absoluteMode && adjustValue != 0) adjustValue = adjustValue < 0 ? -1 : 1;
+            Value += adjustValue * multiplier;
+            if (min != 0 || max != 0)
+            {
+                {
+                    if (Value < min)
+                    {
+                        if (loopRange) Value = max + (Value - min);
+                        else Value = min;
+                    }
+                    else if (Value > max)
+                    {
+                        if (loopRange) Value = min + (Value - max);
+                        else Value = max;
+                    }
+                }
+            }
+            if (nearest != 0)
+            {
+                Value = (float)Math.Round(Value / nearest, MidpointRounding.AwayFromZero) * nearest;
+            }
+            return Set(Value);
+        }
+
 
         private static bool isRPN(string variableName)
         {
@@ -173,6 +260,13 @@ namespace SimComLib
         {
             _initialised = true;
         }
+
+        public void DoOnChanged()
+        {
+            OnChanged?.Invoke(this._simCom, this);
+        }
+
+        public event SimComDataEventHandler OnChanged;
     }
 }
 

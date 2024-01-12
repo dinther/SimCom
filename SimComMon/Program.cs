@@ -8,7 +8,7 @@
 //  Variable name strings consist of 6 parts: Type, Name, Index, Units, Interval, deltaEpsilon
 //
 //  Type            Optional. Defines the variable type.
-//  Name            Required. Name of the Variable or Full Reverse Polish Notation calculations
+//  Name            Required. Name of the Variable or Full Reverse Polish Notation calculations.
 //  Index           Optional. Some variables use an additional index. For example: A:NAV OBS:1 (Nav radio 1)
 //  Units           Optional. Units of the variable. For example: degrees, feet, knots, etc. Default type is "NUMBER"
 //  Interval        Optional. Interval in milliseconds to monitor the variable. Default is 0 (The variable is read only once)
