@@ -100,15 +100,14 @@ namespace SimComLib
 
         public dynamic Set()
         {
-            _simCom.setVariable(this, Value);
-            return Value;
+            return Set(Value);
         }
 
         public dynamic Set(dynamic Value)
         {
             _simCom.setVariable(this, Value);
-            OldValue = Value;
             this.Value = Value;
+            OldValue = Value;
             return Value;
         }
 
