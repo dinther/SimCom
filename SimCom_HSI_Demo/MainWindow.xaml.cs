@@ -227,10 +227,10 @@ namespace SimCom_HSI_Demo
             {
                 step *= 5;
             }
-            Vor1Set.Value += step;
-            while (Vor1Set.Value < 0) Vor1Set.Value += 360;
-            Vor1Set.Value %= 360;
-            Vor1Set.Set(Vor1Set.Value);
+            float newVal = Vor1Set.Value + step;
+            while (newVal < 0) newVal += 360;
+            newVal %= 360;
+            Vor1Set.Set(newVal);
             lastScroll = newTime;
         }
 
@@ -243,10 +243,10 @@ namespace SimCom_HSI_Demo
             {
                 step *= 5;
             }
-            HeadingBug.Value += step;
-            while (HeadingBug.Value < 0) HeadingBug.Value += 360;
-            HeadingBug.Value %= 360;
-            HeadingBug.Set(HeadingBug.Value);
+            float newVal = HeadingBug.Value + step;
+            while (newVal < 0) newVal += 360;
+            newVal %= 360;
+            HeadingBug.Set(newVal);
             lastScroll = newTime;
         }
 

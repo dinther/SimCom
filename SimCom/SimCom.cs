@@ -163,7 +163,7 @@ namespace SimComLib
         //  Units           Optional. String - Units of the variable. For example: degrees, feet, knots, etc. Default type is "NUMBER"
         //  Interval        Optional. Integer - Interval in milliseconds to monitor the variable. Default is 0 (The variable is read once)
         //  deltaEpsilon    Optional. Float - The minimum change in value to trigger a notification. Default is 0 (Any change in value triggers a notification)
-        public SimVal GetVariable(string variableName, string Alias, dynamic Default)
+        public SimVal GetVariable(string variableName, string Alias="", dynamic Default=null)
         {
             SimVal simVal;
             bool init = false;
