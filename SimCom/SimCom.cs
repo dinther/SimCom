@@ -358,7 +358,6 @@ namespace SimComLib
                 default: throw new SimCom_Exception($"Failed to execute calcCode {calcCode} {hr.ToString()}", hr);
             }
 
-            Debug.WriteLine($"Calculator code '{calcCode}' returned: {fResult} and '{sResult}'");
             if (isString)
             {
                 return sResult;
