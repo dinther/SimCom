@@ -92,7 +92,7 @@ namespace SimComLib
         public dynamic Value;
         public dynamic OldValue;
         public string Text {  get { return Value.ToString(); } }
-        public string Format(string format = "", float displayScaler = 1)
+        public string Format(string format = "", double displayScaler = 1)
         {
             return String.Format(format, Value * displayScaler);
         }
