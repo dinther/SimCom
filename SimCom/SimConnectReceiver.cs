@@ -173,7 +173,7 @@ namespace SimComLib
         {
             SimVal simVal = simEventVals[(uint)recEvent.uEventID];
             Debug.WriteLine($"OnRecvEvent: {simVal.FullName} ( {simVal.Value} )");
-            simVal.Value = recEvent.dwData;
+            simVal.setValue(recEvent.dwData);
             OnEvent?.Invoke(simVal, new EventArgs());
         }
 

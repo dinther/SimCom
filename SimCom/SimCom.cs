@@ -163,11 +163,11 @@ namespace SimComLib
         //  Units           Optional. String - Units of the variable. For example: degrees, feet, knots, etc. Default type is "NUMBER"
         //  Interval        Optional. Integer - Interval in milliseconds to monitor the variable. Default is 0 (The variable is read once)
         //  deltaEpsilon    Optional. Float - The minimum change in value to trigger a notification. Default is 0 (Any change in value triggers a notification)
-        public SimVal GetVariable(string variableName, dynamic Default=null)
+        public SimVal GetVariable(string variableName, string Alias, dynamic Default)
         {
             SimVal simVal;
             bool init = false;
-            SimVal lookupSimVal = new SimVal(this, variableName, definitionIndex, Default);
+            SimVal lookupSimVal = new SimVal(this, variableName, definitionIndex, Alias, Default);
             try
             {
                 simVal = simValNames[lookupSimVal.FullName];
@@ -315,7 +315,7 @@ namespace SimComLib
             if (simVal.IsRPN)
             {
                 var answer = Calc(simVal.Name);
-                simVal.Value = answer;
+                simVal.setValue(answer);
             }
             else
             {
@@ -330,7 +330,7 @@ namespace SimComLib
                             case HR.NOT_CONNECTED: setConnectionStatus(SimCom_Connection_Status.CONNECTION_FAILED); break;
                             default: throw new SimCom_Exception($"Failed to get variable {simVal.VariableRequest.variableName} {hr.ToString()}", hr);
                         }
-                        simVal.Value = varResult;
+                        simVal.setValue(varResult);
                     }
                     else
                     {
@@ -341,7 +341,7 @@ namespace SimComLib
                             case HR.NOT_CONNECTED: setConnectionStatus(SimCom_Connection_Status.CONNECTION_FAILED); break;
                             default: throw new SimCom_Exception($"Failed to get variable {simVal.VariableRequest.variableName} {hr.ToString()}", hr);
                         }
-                        simVal.Value = varResult;
+                        simVal.setValue((float)varResult);
                     }
                 }
             }
@@ -373,7 +373,7 @@ namespace SimComLib
             dynamic localValue;
             localValue = Calc($"({simVal.FullName})", (simVal.Units == "STRING"));
             simVal.OldValue = simVal.Value;
-            simVal.Value = localValue;
+            simVal.setValue(localValue);
             return true;
         }
 
@@ -396,7 +396,7 @@ namespace SimComLib
                 if (simVal != null)
                 {
                     simVal.OldValue = simVal.Value;
-                    simVal.Value = value;
+                    simVal.setValue(value);
                     simVal.DoOnChanged();
                     DoOnDataReceived(simVal);
                 }

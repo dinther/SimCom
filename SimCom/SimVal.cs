@@ -15,6 +15,7 @@ namespace SimComLib
         private uint _valIndex;
         private char _type;
         private string _name;
+        private string _alias;
         private byte _index;
         private string _units;
         private uint _interval;
@@ -22,6 +23,7 @@ namespace SimComLib
         private string _nameIndex;
         private string _fullName;
         private bool _isRPN;
+        private dynamic _value;
         private bool _initialised = false;
         private float _lastHighSpeedAdjustValue = 0;
         private float _lastHighSpeedTime;
@@ -33,7 +35,7 @@ namespace SimComLib
             TimeSpan timeSpan = now - dStartTime;
             return (float)timeSpan.TotalSeconds;
         }
-        public SimVal(SimCom simCom, string variableName, uint valIndex, dynamic Default)
+        public SimVal(SimCom simCom, string variableName, uint valIndex, string alias="", dynamic Default=null)
         {
             _simCom = simCom;
             _valIndex = valIndex;
@@ -62,13 +64,13 @@ namespace SimComLib
                 if (_units == "STRING")
                 {
                     OldValue = new string(Default != null? Default : "");
-                    Value = new string(Default != null ? Default : "");
+                    _value = new string(Default != null ? Default : "");
                 }
                 else
                 {
-                    double val = Default != null ? Default : 0;
+                    float val = Default != null ? Default : 0;
                     OldValue = val;
-                    Value = val;
+                    _value = val;
                 }
                 if (_units == "") _units = "number";
                 _nameIndex = (_index > 0 && _index < 255) ? _name + ':' + _index.ToString() : _name;
@@ -77,19 +79,25 @@ namespace SimComLib
                 if (_index > 0 && _index < 255) _fullName += ":" + _index.ToString();  //  _indexes are never 255 (I think)
                 if (_units.Length > 0) _fullName += "," + _units;
             }
+            _alias = alias=="" ? _name : alias;
         }
         public string FullName { get { return _fullName; } }
         public VariableRequest VariableRequest { get { return _variableRequest; } }
         public uint ValIndex { get { return _valIndex; } }
         public char Type { get { return _type; } }
         public string Name { get { return _name; } }
+        public string Alias { get { return _alias; } }
         public string NameIndex { get { return _nameIndex; } }
         public byte Index { get { return _index; } }
         public string Units { get { return _units; } }
         public uint Interval { get { return _interval; } }
         public double DeltaEpsilon { get { return _deltaEpsilon; } }
         public bool IsRPN { get { return _isRPN; } }
-        public dynamic Value;
+        public void setValue(dynamic value) //temp test
+        {
+            _value = value;
+        }
+        public dynamic Value { get { return _value; } }
         public dynamic OldValue;
         public string Text {  get { return Value.ToString(); } }
         public string Format(string format = "", double displayScaler = 1)
@@ -106,14 +114,14 @@ namespace SimComLib
         public dynamic Set(dynamic Value)
         {
             _simCom.setVariable(this, Value);
-            this.Value = Value;
-            OldValue = Value;
+            OldValue = _value;
+            _value = Value;
             return Value;
         }
 
         public dynamic Adj(dynamic Value)
         {
-            return Set(this.Value +=Value);
+            return Set(_value += Value);
         }
 
         //  This is a rather powerful value adjust function designed to be used with rotary encoders that return relative change.
@@ -131,11 +139,13 @@ namespace SimComLib
         //  The slowNearest and fastNearest parameters allow you to define the rounding target for slow and fast mode.
         //  Typically you want to round to the the same values as the multiplier.
 
-        public dynamic Adj(float adjustValue, float slowFastTreshold, float slowMultiplier, float fastMultiplier, float slowNearest, float fastNearest, float min, float max, bool loopRange = false, bool absoluteMode=false, float fastFallBackTime = 0.6f)
+        public float Adj(float adjustValue, float slowFastTreshold, float slowMultiplier, float fastMultiplier, float slowNearest, float fastNearest, float min, float max, bool loopRange = false, bool absoluteMode=false, float fastFallBackTime = 0.6f)
         {
             float step;
             float multiplier;
             float nearest;
+            float newValue = _value;
+
             if (Math.Abs(adjustValue) > slowFastTreshold)
             {
                 _lastHighSpeedAdjustValue = Math.Abs(adjustValue);
@@ -161,27 +171,27 @@ namespace SimComLib
                 }
             }
             if (absoluteMode && adjustValue != 0) adjustValue = adjustValue < 0 ? -1 : 1;
-            Value += adjustValue * multiplier;
+            newValue += adjustValue * multiplier;
             if (min != 0 || max != 0)
             {
                 {
-                    if (Value < min)
+                    if (newValue < min)
                     {
-                        if (loopRange) Value = max + (Value - min);
-                        else Value = min;
+                        if (loopRange) newValue = max + (newValue - min);
+                        else newValue = min;
                     }
-                    else if (Value > max)
+                    else if (newValue > max)
                     {
-                        if (loopRange) Value = min + (Value - max);
-                        else Value = max;
+                        if (loopRange) newValue = min + (newValue - max);
+                        else newValue = max;
                     }
                 }
             }
             if (nearest != 0)
             {
-                Value = (float)Math.Round(Value / nearest, MidpointRounding.AwayFromZero) * nearest;
+                newValue = (float)Math.Round(newValue / nearest, MidpointRounding.AwayFromZero) * nearest;
             }
-            return Set(Value);
+            return Set(newValue);
         }
 
 
