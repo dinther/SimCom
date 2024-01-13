@@ -33,7 +33,7 @@ namespace SimComLib
             TimeSpan timeSpan = now - dStartTime;
             return (float)timeSpan.TotalSeconds;
         }
-        public SimVal(SimCom simCom, string variableName, uint valIndex)
+        public SimVal(SimCom simCom, string variableName, uint valIndex, dynamic Default)
         {
             _simCom = simCom;
             _valIndex = valIndex;
@@ -61,12 +61,12 @@ namespace SimComLib
                 splitVariableName(variableName, out _type, out _name, out _index, out _units, out _interval, out _deltaEpsilon);
                 if (_units == "STRING")
                 {
-                    OldValue = new string("");
-                    Value = new string("");
+                    OldValue = new string(Default != null? Default : "");
+                    Value = new string(Default != null ? Default : "");
                 }
                 else
                 {
-                    double val =0;
+                    double val = Default != null ? Default : 0;
                     OldValue = val;
                     Value = val;
                 }
