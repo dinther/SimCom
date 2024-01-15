@@ -1,14 +1,19 @@
 # SimComMon
 SimComMon is a command line demo app to showcase the SimCom library.
+Many types of variables can be monitored. such as A: variables, K: variables, L: variables, etc.
 
-The program can monitor and set multiple parameters in microsoft flight simulator 2020
+The program can set and/or monitor multiple parameters in microsoft flight simulator 2020 and reports to STD OUT.
+
 Pass one or more variable definitions on the command line each definition preceded with a double dash `--`
 
-```SimComMon.exe --A:HEADING INDICATOR,degrees```
+```SimComMon.exe --A:HEADING INDICATOR,degrees --AUTOPILOT HEADING LOCK DIR,Degrees,INT32,100,1 as APHDG```
 
 This will cause the program to connect to MSFS and return the value of the heading indicator in degrees after which it terminates.
 
-```HEADING INDICATOR=35.87491068468636```
+```
+HEADING INDICATOR=34.90064381147878
+APHDG=126
+```
 
 For long names with spaces you might was to pass an alias name like this:
 
@@ -20,7 +25,7 @@ This results in
 
 after which the program terminates.
 
-## Reading variables
+## Get Variables
 
 ### Variable names
 SimCom does quite some magic with variable names and tries to make things as easy as possible.
@@ -58,18 +63,21 @@ This is optional. DeltaEpsilon is only relevant when interval is set. DeltaEpsil
 will cause SimComMon to report the tiniest changes of the aircraft heading but only once every 500 milli seconds.
 `--HEADING INDICATOR,500,1` will cause SimComMon to report the aircraft heading change only when it changed more than when it reported last and only if at least 500 milliseconds have passed.
 
+## Set Variables
+SimComMon can also set variables in MSFS. The syntax for the variable names is identical to reading variables but in addition the variable definition also has an equals sign and a value. For example:
+```--AUTOPILOT HEADING LOCK DIR,Degrees=123```
+This causes the Autopilot heading bug to be set to 123 degrees after which the program terminates.
+Pass an interval if you also wish to monitor the variable.
+
+```--AUTOPILOT HEADING LOCK DIR,Degrees,INT32,100,1 as APHDG=123```
+
+This causes the AUTOPILOT HEADING LOCK DIR variable to be set to 123 degrees once and reported on 'APHDG=123' and after that it will be reported on again under the name `APHDG` if it changes by at least 1 degrees and it has been at least 100 milli seconds since the last report
+
 ### Command line examples
-Using interval and DeltaEpsilon can reduce the data stream to a minimum but relevant output.
-Optional. Char    - Defines the variable VarType.
-        //  Name            Required. String  - Name of the Variable or Full Reverse Polish Notation calculations.
-        //  Index           Optional. Integer - Some variables use an additional index. For example: A:NAV OBS:1 (Nav radio 1)
-        //  Units           Optional. String  - Units of the variable. For example: degrees, feet, knots, (See Simconnect SDK). Default units is "NUMBER"
-        //  ValueType       Optional. String  - Type of the value returned. INT8, INT16, INT32, INT64, FLOAT, DOUBLE. Default type is DOUBLE
-        //  Interval        Optional. Integer - Interval in milliseconds to monitor the variable. Default is 0 (The variable is read once)
-        //  deltaEpsilon    Optional. Float   - The minimum change in value to trigger a notification. Default is 0 (Any change in value triggers a notification)
 
 
-All types of variables can be monitored. such as A: variables, K: variables, L: variables, etc.
+
+
 
 ![image](https://github.com/dinther/SimCom/assets/1192916/f2e4c98b-3921-48c3-92cd-f31405b60f75)
 
