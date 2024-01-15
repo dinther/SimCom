@@ -1,6 +1,5 @@
 # SimComMon
-SimComMon is a command line demo app to showcase the SimCom library.
-Many types of variables can be monitored. such as A: variables, K: variables, L: variables, etc.
+SimComMon is a command line demo app to showcase the SimCom library. Undfer the hood SimCom uses both SimConnect for the events and WASimCommander for the rest. Thanks to WASimCommander many types of variables can be monitored. such as A: variables, K: variables, L: variables, etc.
 
 The program can set and/or monitor multiple parameters in microsoft flight simulator 2020 and reports to STD OUT.
 
