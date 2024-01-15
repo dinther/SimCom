@@ -2,7 +2,7 @@
   "profiles": {
     "SimComMon": {
       "commandName": "Project",
-      "commandLineArgs1": "--HEADING INDICATOR,degrees,500 as HDG=123",
+      "commandLineArgs1": "--PLANE LATITUDE,degrees=-37.0171754 --PLANE LONGITUDE,degrees=174.7676331 --PLANE HEADING DEGREES MAGNETIC,degrees=50",
       "commandLineArgs": "--A:NAV OBS:1,degrees,25,1 --AUTOPILOT HEADING LOCK DIR,Degrees,INT32=123 --HEADING INDICATOR,degrees, 25, 0.1  as HDG --TITLE,string"
     }
   }

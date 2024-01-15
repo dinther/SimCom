@@ -28,14 +28,6 @@ SimCom simCom = new SimCom(1964);
 simCom.OnDataChanged += SimCom_OnDataChanged;
 bool monitor = false;
 
-string name = "";
-bool asAlias = false;
-bool equals = false;
-bool isString = false;
-string alias = "";
-string value = "";
-
-
 //  Wait untill connected
 while (!simCom.Connect()) { };
 
@@ -49,7 +41,12 @@ if (valueDefs.Length < 2)
 }
 
 for (int i=1; i<valueDefs.Length; i++)
-{ 
+{
+    string name = "";
+    bool asAlias = false;
+    bool equals = false;
+    string alias = "";
+    string value = "";
     string valueDef = valueDefs[i].Trim().Replace(" as ", "|as|").Replace(" AS ", "|as|").Replace("=", "|=|");
     if (valueDef != "")
     {
@@ -98,6 +95,7 @@ while (monitor)
 
 void SimCom_OnDataChanged(SimCom simCom, SimVal simVal)
 {
-    Console.WriteLine($"{simVal.Alias}={simVal.Value}");
+    string valName = simVal.Alias == "" ? simVal.Name : simVal.Alias;
+    Console.WriteLine($"{valName}={simVal.Value}");
 }
 

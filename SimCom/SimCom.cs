@@ -346,7 +346,17 @@ namespace SimComLib
                             case HR.NOT_CONNECTED: setConnectionStatus(SimCom_Connection_Status.CONNECTION_FAILED); break;
                             default: throw new SimCom_Exception($"Failed to get variable {simVal.VariableRequest.variableName} {hr.ToString()}", hr);
                         }
-                        simVal.setValue(varResult);
+
+                        switch (simVal.ValueType)
+                        {
+                            case WaSim_ValueTypes.INT8:  simVal.setValue((SByte)varResult); break;
+                            case WaSim_ValueTypes.INT16: simVal.setValue((Int16)varResult); break;
+                            case WaSim_ValueTypes.INT32: simVal.setValue((Int32)varResult); break;
+                            case WaSim_ValueTypes.INT64: simVal.setValue((Int64)varResult); break;
+                            case WaSim_ValueTypes.FLOAT: simVal.setValue((float)varResult); break;
+                            case WaSim_ValueTypes.DOUBLE: simVal.setValue((double)varResult); break;
+                            default: simVal.setValue(varResult); break;
+                        }
                     }
                 }
             }

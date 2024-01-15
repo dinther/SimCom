@@ -81,7 +81,8 @@ namespace SimComLib
                 if (_index > 0 && _index < 255) _fullName += ":" + _index.ToString();  //  _indexes are never 255 (I think)
                 if (_units.Length > 0) _fullName += "," + _units;
             }
-            _alias = alias=="" ? _name : alias;
+            _alias = alias;
+            //_alias = alias=="" ? _name : alias;
         }
         public string FullName { get { return _fullName; } }
         public VariableRequest VariableRequest { get { return _variableRequest; } }
