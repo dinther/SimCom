@@ -1,7 +1,13 @@
 # SimComMon
-SimComMon is a command line demo app to showcase the SimCom library. Undfer the hood SimCom uses both SimConnect for the events and WASimCommander for the rest. Thanks to WASimCommander many types of variables can be monitored. such as A: variables, K: variables, L: variables, etc.
+SimComMon is a command line demo app to showcase the SimCom library. Undfer the hood SimCom uses both SimConnect for the events and WASimCommander for the rest. Thanks to [WASimCommander](https://github.com/mpaperno/WASimCommander) many types of variables can be monitored. such as A: variables, K: variables, L: variables, etc.
 
-The program can set and/or monitor multiple parameters in microsoft flight simulator 2020 and reports to STD OUT.
+The program can get, set and/or monitor most variables in microsoft flight simulator 2020 via the command line. It reports to STD OUT.
+
+SimCom can handle
+[SimConnect variables](https://docs.flightsimulator.com/html/Programming_Tools/SimVars/Simulation_Variables.htm)
+[SimConnect events](https://docs.flightsimulator.com/html/Programming_Tools/Event_IDs/Event_IDs.htm)
+[Calculated variables](https://docs.flightsimulator.com/html/Additional_Information/Reverse_Polish_Notation.htm)
+Custom variables and whatever else WASimcommander can do.
 
 Pass one or more variable definitions on the command line each definition preceded with a double dash `--`
 
@@ -16,12 +22,14 @@ AUTOPILOT HEADING LOCK DIR=126
 
 For long names with spaces you might was to pass an alias name like this:
 
-```SimComMon.exe --A:HEADING INDICATOR,degrees as HDG```
+```
+SimComMon.exe --A:HEADING INDICATOR,degrees as HDG
+```
+This causes SimComMon to report that variable by its alias name.
 
-This causes SimComMon to report that variable by it's alias name.
-
-```HDG=35.87491068468636```
-
+```
+HDG=35.87491068468636
+```
 after which the program terminates.
 
 ## Get Variables
@@ -34,12 +42,12 @@ The variableName string consist of 7 parts: VarType:Name:Index,Units,ValueType,I
 For example: `A:NAV OBS:1,degrees,FLOAT,1000,0.1`
 
 #### VarType
-VarType is optional if you just use the simconnect variables as published on https://docs.flightsimulator.com/html/Programming_Tools/SimVars/Simulation_Variables.htm and https://docs.flightsimulator.com/html/Programming_Tools/Event_IDs/Event_IDs.htm
+VarType is optional if you just use the simconnect variables as published on [SimConnect variables](https://docs.flightsimulator.com/html/Programming_Tools/SimVars/Simulation_Variables.htm) and [SimConnect events](https://docs.flightsimulator.com/html/Programming_Tools/Event_IDs/Event_IDs.htm)
 
 SimCom considers variables and events the same thanks to the power of the WASimCommander library. Where possible SimCom will assign the correct VarType if you don't provide one. You can find a description of the various var types here https://docs.flightsimulator.com/html/Additional_Information/Reverse_Polish_Notation.htm
 
 #### Name
-This is required. This can be a simconnect variable name or a simconnect event name but also custom variables all thanks the power of the WASimCommander library.
+This is required. This can be a simconnect variable name or a simconnect event name but also custom variables and even calculated vsariables all thanks the power of the WASimCommander library.
 
 #### Index
 Some variables also require an index value. For examle `NAV OBS:1` The index follows after the variable name separated by a colon as shown.
@@ -68,6 +76,7 @@ It can be useful if you want a variable to be reported in whole numbers without 
 ```
 SimComMon.exe --HEADING INDICATOR,degrees,INT32,500
 ```
+
 produces
 ```
 HEADING INDICATOR=34
