@@ -40,7 +40,7 @@ namespace SimCom_Basic_Demo
 
             simCom.GetVariable("Title,string, 2000, 0.0");
             simCom.GetVariable("A:AUTOPILOT HEADING LOCK DIR:degrees, 50, 0.01", "APHDG");
-            simCom.GetVariable("HEADING INDICATOR:degrees, 50, 0.001");
+            simCom.GetVariable("HEADING INDICATOR:degrees, 50, 0.01");
             simCom.GetVariable("NAV OBS:1:degrees, 50, 0.01");
             simCom.GetVariable("GEAR_TOGGLE");
             simCom.GetVariable("(A:GEAR LEFT POSITION,number) (A:GEAR RIGHT POSITION,number) + (A:GEAR CENTER POSITION,number) +, 25, 0.05", "GEARPOS");
