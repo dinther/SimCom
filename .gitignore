@@ -361,3 +361,6 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+/Demo_exe/SimComMon.zip
+/Demo_exe/SimCom_Basic_Demo.zip
+/Demo_exe/SIMCOM_HSI_Demo.zip
