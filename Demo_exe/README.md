@@ -7,7 +7,9 @@ You probably need to restart MSFS if it was already running.
 
 Run both MSFS and the demo program.
 
-The demo also fully works across a LAN. Two files to edit in the demo application folder:
+The demo also fully works across a LAN. don't change anything if you run the demo on the same PC as MSFS but if you want to run the demo on a different PC on the same LAN then keep reading.
+
+Two files to edit in the demo application folder:
 client_conf.ini  -  Change the networkConfigId value from -1 to 3
 ```
 networkConfigId = 3
@@ -15,7 +17,7 @@ networkConfigId = 3
 simconnect.cfg
 
 Find the [SimConnect.3] in the file. The number 3 refers back to the networkConfigId in the client_conf.ini file.
-Make it look like this but change the 127.0.0.1 to the IP Address of your PC running MSFS.
+Make that section look like this but change the 127.0.0.1 to the IP Address of your PC running MSFS. Leave everything else in place.
 ```
 [SimConnect.3]
 Protocol=Ipv4
@@ -29,3 +31,4 @@ The last two parameters seem to make all the difference in my testing. All this 
 Also make sure to set the firewall on your Flight sim PC to allow incoming connections on Port 500.
 
 I intend to write some code for this later because this is just too painful and easy enough to lookup programatically. But it does work.
+
