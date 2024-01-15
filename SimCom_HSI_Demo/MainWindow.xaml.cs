@@ -227,7 +227,7 @@ namespace SimCom_HSI_Demo
             {
                 step *= 5;
             }
-            float newVal = Vor1Set.Value + step;
+            double newVal = Vor1Set.Value + step;
             while (newVal < 0) newVal += 360;
             newVal %= 360;
             Vor1Set.Set(newVal);
@@ -243,7 +243,7 @@ namespace SimCom_HSI_Demo
             {
                 step *= 5;
             }
-            float newVal = HeadingBug.Value + step;
+            double newVal = HeadingBug.Value + step;
             while (newVal < 0) newVal += 360;
             newVal %= 360;
             HeadingBug.Set(newVal);

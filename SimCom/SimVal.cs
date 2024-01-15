@@ -11,13 +11,14 @@ namespace SimComLib
 {
     public class SimVal
     {
-        private SimCom? _simCom = null;
+        private SimCom _simCom = null;
         private uint _valIndex;
-        private char _type;
+        private char _varType;
         private string _name;
         private string _alias;
         private byte _index;
         private string _units;
+        private WaSim_ValueTypes _valueType;
         private uint _interval;
         private double _deltaEpsilon;
         private string _nameIndex;
@@ -25,15 +26,16 @@ namespace SimComLib
         private bool _isRPN;
         private dynamic _value;
         private bool _initialised = false;
-        private float _lastHighSpeedAdjustValue = 0;
-        private float _lastHighSpeedTime;
+        private double _lastHighSpeedAdjustValue = 0;
+        private double _lastHighSpeedTime;
+        private string[] _valueTypeStrings = { "INT8", "INT16", "INT32", "INT64", "FLOAT", "DOUBLE" };
         private DateTime dStartTime = DateTime.Now;
         private VariableRequest _variableRequest;
-        public float GetTimestampInSeconds()
+        public double GetTimestampInSeconds()
         {
             DateTime now = DateTime.Now;
             TimeSpan timeSpan = now - dStartTime;
-            return (float)timeSpan.TotalSeconds;
+            return (double)timeSpan.TotalSeconds;
         }
         public SimVal(SimCom simCom, string variableName, uint valIndex, string alias="", dynamic Default=null)
         {
@@ -60,7 +62,7 @@ namespace SimComLib
             }
             else
             {
-                splitVariableName(variableName, out _type, out _name, out _index, out _units, out _interval, out _deltaEpsilon);
+                splitVariableName(variableName, out _varType, out _name, out _index, out _units, out _valueType, out _interval, out _deltaEpsilon);
                 if (_units == "STRING")
                 {
                     OldValue = new string(Default != null? Default : "");
@@ -68,14 +70,14 @@ namespace SimComLib
                 }
                 else
                 {
-                    float val = Default != null ? Default : 0;
+                    double val = Default != null ? Default : 0;
                     OldValue = val;
                     _value = val;
                 }
                 if (_units == "") _units = "number";
                 _nameIndex = (_index > 0 && _index < 255) ? _name + ':' + _index.ToString() : _name;
-                _variableRequest = new VariableRequest(_type, _nameIndex, _units);
-                _fullName = $"{_type}:{_name}";
+                _variableRequest = new VariableRequest(_varType, _nameIndex, _units);
+                _fullName = $"{_varType}:{_name}";
                 if (_index > 0 && _index < 255) _fullName += ":" + _index.ToString();  //  _indexes are never 255 (I think)
                 if (_units.Length > 0) _fullName += "," + _units;
             }
@@ -84,12 +86,13 @@ namespace SimComLib
         public string FullName { get { return _fullName; } }
         public VariableRequest VariableRequest { get { return _variableRequest; } }
         public uint ValIndex { get { return _valIndex; } }
-        public char Type { get { return _type; } }
+        public char VarType { get { return _varType; } }
         public string Name { get { return _name; } }
         public string Alias { get { return _alias; } }
         public string NameIndex { get { return _nameIndex; } }
         public byte Index { get { return _index; } }
         public string Units { get { return _units; } }
+        public WaSim_ValueTypes ValueType { get { return _valueType; } }
         public uint Interval { get { return _interval; } }
         public double DeltaEpsilon { get { return _deltaEpsilon; } }
         public bool IsRPN { get { return _isRPN; } }
@@ -139,12 +142,11 @@ namespace SimComLib
         //  The slowNearest and fastNearest parameters allow you to define the rounding target for slow and fast mode.
         //  Typically you want to round to the the same values as the multiplier.
 
-        public float Adj(float adjustValue, float slowFastTreshold, float slowMultiplier, float fastMultiplier, float slowNearest, float fastNearest, float min, float max, bool loopRange = false, bool absoluteMode=false, float fastFallBackTime = 0.6f)
+        public double Adj(double adjustValue, double slowFastTreshold, double slowMultiplier, double fastMultiplier, double slowNearest, double fastNearest, double min, double max, bool loopRange = false, bool absoluteMode=false, double fastFallBackTime = 0.6f)
         {
-            float step;
-            float multiplier;
-            float nearest;
-            float newValue = _value;
+            double multiplier;
+            double nearest;
+            double newValue = _value;
 
             if (Math.Abs(adjustValue) > slowFastTreshold)
             {
@@ -155,8 +157,8 @@ namespace SimComLib
             }
             else
             {
-                float nowTime = GetTimestampInSeconds();
-                float timeSinceLastHighSpeedMode = nowTime - _lastHighSpeedTime;
+                double nowTime = GetTimestampInSeconds();
+                double timeSinceLastHighSpeedMode = nowTime - _lastHighSpeedTime;
                 if (timeSinceLastHighSpeedMode < fastFallBackTime)
                 {
                     adjustValue = (adjustValue < 0 ? -1 : adjustValue > 0 ? 1 : 0) * Math.Abs(_lastHighSpeedAdjustValue);
@@ -189,7 +191,7 @@ namespace SimComLib
             }
             if (nearest != 0)
             {
-                newValue = (float)Math.Round(newValue / nearest, MidpointRounding.AwayFromZero) * nearest;
+                newValue = Math.Round(newValue / nearest, MidpointRounding.AwayFromZero) * nearest;
             }
             return Set(newValue);
         }
@@ -200,7 +202,33 @@ namespace SimComLib
             return variableName.Contains('(') && variableName.Contains(')');
         }
 
-        private void splitVariableName(string variableName, out char Type, out string Name, out byte Index, out string Units, out uint Interval, out double DeltaEpsilon)
+        private WaSim_ValueTypes stringToValueType(string ValueType)
+        {
+            switch (ValueType.ToUpper())
+            {
+                case "INT8": return WaSim_ValueTypes.INT8;
+                case "INT16": return WaSim_ValueTypes.INT16;
+                case "INT32": return WaSim_ValueTypes.INT32;
+                case "INT64": return WaSim_ValueTypes.INT64;
+                case "FLOAT": return WaSim_ValueTypes.FLOAT;
+                case "DOUBLE": return WaSim_ValueTypes.DOUBLE;
+                default: throw new SimCom_Exception($"Unknown ValueType {ValueType}", HR.FAIL);
+            }
+        }
+
+        //  splitVariableName The variableName string consist of 7 parts: 'VarType':"Name":Index,"Units","type",Interval,deltaEpsilon
+        //
+        //  Example: "A:NAV OBS:1,degrees,FLOAT,1000,0.1"
+        //
+        //  VarType         Optional. Char    - Defines the variable VarType.
+        //  Name            Required. String  - Name of the Variable or Full Reverse Polish Notation calculations.
+        //  Index           Optional. Integer - Some variables use an additional index. For example: A:NAV OBS:1 (Nav radio 1)
+        //  Units           Optional. String  - Units of the variable. For example: degrees, feet, knots, (See Simconnect SDK). Default units is "NUMBER"
+        //  ValueType       Optional. String  - Type of the value returned. INT8, INT16, INT32, INT64, FLOAT, DOUBLE. Default type is DOUBLE
+        //  Interval        Optional. Integer - Interval in milliseconds to monitor the variable. Default is 0 (The variable is read once)
+        //  deltaEpsilon    Optional. Float   - The minimum change in value to trigger a notification. Default is 0 (Any change in value triggers a notification)
+
+        private void splitVariableName(string variableName, out char VarType, out string Name, out byte Index, out string Units, out WaSim_ValueTypes ValueType, out uint Interval, out double DeltaEpsilon)
         {
 
             //string userString = "A:NAV OBS:1,degrees,25,0.01";
@@ -210,10 +238,11 @@ namespace SimComLib
 
             //Char[] delimiters = { ':', ',' };
             string[] values = Regex.Split(variableName.ToUpper() , pattern);
-            Type = '\0';
+            VarType = '\0';
             Name = "";
             Index = 255;
             Units = "";
+            ValueType = WaSim_ValueTypes.DOUBLE;
             Interval = 0;
             DeltaEpsilon = 0;
 
@@ -223,11 +252,11 @@ namespace SimComLib
             //  Type is always the first parameter and is a single character and not a byte. This is optional.
             if (values.Length > i && values[i].Length == 2 && values[i].EndsWith(':') && !byte.TryParse(values[i][0].ToString(), out byte TestInt))
             {
-                Type = values[i][0];
+                VarType = values[i][0];
                 i++;
             }   else
             {
-                Type = (values.Length > i && (values[i].Contains(' ') || values[i].TrimEnd(charsToTrim) == "TITLE")) ? 'A' : 'K';
+                VarType = (values.Length > i && (values[i].Contains(' ') || values[i].TrimEnd(charsToTrim) == "TITLE")) ? 'A' : 'K';
             }
 
             //  Try to find the name
@@ -247,23 +276,33 @@ namespace SimComLib
             }
             
             //  Try to find the units
-            //  Units is always the second, third or fourth parameter and is not a number and is optional.
+            //  Units is either the second, third or fourth parameter and is not a number and is not a Type and is optional.
             decimal numberTest = 0;
-            if (values.Length > i && !decimal.TryParse(values[i].TrimEnd(charsToTrim), out numberTest))
+            if (values.Length > i && !decimal.TryParse(values[i].TrimEnd(charsToTrim), out numberTest) && !_valueTypeStrings.Contains(values[i].ToUpper()))
             {
                 Units = values[i].TrimEnd(charsToTrim);
                 i++;
             }
 
+            //  Try to find the type
+            //  Type is either the second, third, fourth or fifth parameter and is not a number and is optional.
+            //decimal numberTest = 0;
+
+            if (values.Length > i && _valueTypeStrings.Contains(values[i].TrimEnd(charsToTrim).ToUpper()))
+            {
+                ValueType = stringToValueType(values[i].TrimEnd(charsToTrim));
+                i++;
+            }
+
             //  Try to find the interval
-            //  Interval is always the third, fourth or fifth parameter and is a uint and is optional.
+            //  Interval is either the third, fourth or fifth parameter and is a uint and is optional.
             if (values.Length > i && uint.TryParse(values[i].TrimEnd(charsToTrim), out Interval)) { i++; }
 
             //  Try to find the deltaEpsilon
             //  DeltaEpsilon is always the fourth, fifth or sixth parameter and is a double and is optional.
             if (values.Length > i && double.TryParse(values[i].TrimEnd(charsToTrim), out DeltaEpsilon)) { i++; }
 
-            if (values.Length > i) throw new SimCom_Exception($"Too many variable parts. Max 6", HR.FAIL);
+            if (values.Length > i) throw new SimCom_Exception($"Too many variable parts. Max 7", HR.FAIL);
         }
         public void SetInitialised()
         {

@@ -2,7 +2,8 @@
   "profiles": {
     "SimComMon": {
       "commandName": "Project",
-      "commandLineArgs": "\"A:NAV OBS:1,degrees,25,1\" \"HEADING INDICATOR,degrees, 25, 0.1\" \"TITLE,string\""
+      "commandLineArgs": "\"HEADING INDICATOR,degrees,10\" ",
+      "commandLineArgs1": "\"A:NAV OBS:1,degrees,25,1\" \"AUTOPILOT HEADING LOCK DIR,Degrees,INT32,100\" \"HEADING INDICATOR,degrees, 25, 0.1\" \"TITLE,string\""
     }
   }
 }

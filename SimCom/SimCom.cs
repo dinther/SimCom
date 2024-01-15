@@ -15,7 +15,7 @@ namespace SimComLib
 {
     public delegate void SimComDataEventHandler(SimCom SimCom, SimVal SimVal);
 
-    public struct ValueTypes
+    public struct ValueTypes1
     {
         public const uint DATA_TYPE_INT8 = uint.MaxValue;
         public const uint DATA_TYPE_INT16 = 4294967294;
@@ -155,14 +155,18 @@ namespace SimComLib
 
         //  GetVariable The variableName string consist of 6 parts: 'Type':"Name":Index,"Units",Interval,deltaEpsilon
         //
-        //  Example: "A:NAV OBS:1,degrees,1000,0.1"
+        //  Example: "A:NAV OBS:1,degrees,type,1000,0.1"
         //
-        //  Type            Optional. Char - Defines the variable type.
-        //  Name            Required. String - Name of the Variable or Full Reverse Polish Notation calculations.
+        //  VarType         Optional. Char    - Defines the variable VarType.
+        //  Name            Required. String  - Name of the Variable or Full Reverse Polish Notation calculations.
         //  Index           Optional. Integer - Some variables use an additional index. For example: A:NAV OBS:1 (Nav radio 1)
-        //  Units           Optional. String - Units of the variable. For example: degrees, feet, knots, etc. Default type is "NUMBER"
+        //  Units           Optional. String  - Units of the variable. For example: degrees, feet, knots, (See Simconnect SDK). Default units is "NUMBER"
+        //  ValueType       Optional. String  - Type of the value returned. INT8, INT16, INT32, INT64, FLOAT, DOUBLE. Default type is DOUBLE
         //  Interval        Optional. Integer - Interval in milliseconds to monitor the variable. Default is 0 (The variable is read once)
-        //  deltaEpsilon    Optional. Float - The minimum change in value to trigger a notification. Default is 0 (Any change in value triggers a notification)
+        //  deltaEpsilon    Optional. Float   - The minimum change in value to trigger a notification. Default is 0 (Any change in value triggers a notification)
+        //
+        //  Alias           Optional. String - Alias for the variable. Default is the variableName.Name
+        //  Default         Optional. Dynamic - Default value for the variable. Default is null (0 for numbers, "" for strings)
         public SimVal GetVariable(string variableName, string Alias="", dynamic Default=null)
         {
             SimVal simVal;
@@ -182,10 +186,10 @@ namespace SimComLib
                 init = true;
             }
 
-            if (simVal.Type != 'K' && simVal.Interval != 0)
+            if (simVal.VarType != 'K' && simVal.Interval != 0)
             {
                 UpdatePeriod updatePeriod = UpdatePeriod.Millisecond;
-                char type = (simVal.Type == 'A' && simVal.Units != "") ? '\0' : simVal.Type;
+                char VarType = (simVal.VarType == 'A' && simVal.Units != "") ? '\0' : simVal.VarType;
 
                 DataRequest? dataRequest = null;
                 HR hr;
@@ -195,7 +199,7 @@ namespace SimComLib
                         requestId: definitionIndex,
                         resultType: CalcResultType.Double,
                         calculatorCode: simVal.FullName,
-                        valueSize: (uint)WaSim_ValueTypes.FLOAT,
+                        valueSize: (uint)WaSim_ValueTypes.DOUBLE,
                         period: updatePeriod,
                         interval: Math.Max(simVal.Interval, 25),
                         deltaEpsilon: (float)Math.Max(0, simVal.DeltaEpsilon)
@@ -213,14 +217,14 @@ namespace SimComLib
                         deltaEpsilon: 0.0f
                     );
                 }
-                else if (type == '\0')
+                else if (VarType == '\0')
                 {
                     dataRequest = new DataRequest(
                         requestId: definitionIndex,
                         simVarName: simVal.Name,
                         unitName: simVal.Units,
-                        simVarIndex: simVal.Index==255? (Byte)0 : simVal.Index,
-                        valueSize: (uint)WaSim_ValueTypes.FLOAT,// (uint)4294967291,
+                        simVarIndex: simVal.Index == 255 ? (Byte)0 : simVal.Index,
+                        valueSize: (uint)simVal.ValueType, //WaSim_ValueTypes.FLOAT,// (uint)4294967291,
                         period: updatePeriod,
                         interval: Math.Max(simVal.Interval, 25),
                         deltaEpsilon: (float)Math.Max(0, simVal.DeltaEpsilon)
@@ -230,7 +234,7 @@ namespace SimComLib
                 {
                     dataRequest = new DataRequest(
                         requestId: definitionIndex,
-                        variableType: type,
+                        variableType: VarType,
                         variableName: simVal.Name,
                         valueSize: (uint)4294967291,
                         period: updatePeriod,
@@ -244,12 +248,12 @@ namespace SimComLib
                 {
                     case HR.OK: break;
                     case HR.NOT_CONNECTED: setConnectionStatus(SimCom_Connection_Status.CONNECTION_FAILED); break;
-                    default: throw new SimCom_Exception($"Failed to subscribe to {type}:{simVal.Name} {hr.ToString()}", hr);
+                    default: throw new SimCom_Exception($"Failed to subscribe to {VarType}:{simVal.Name} {hr.ToString()}", hr);
                 }                  
             }
             definitionIndex++;
 
-            if (simVal.Type == 'K')
+            if (simVal.VarType == 'K')
             {
                 _simConnectEventReceiver.RegisterSimEvent(simVal);
             }
@@ -319,7 +323,7 @@ namespace SimComLib
             }
             else
             {
-                if (simVal.Type != 'K')
+                if (simVal.VarType != 'K')
                 {
                     if (simVal.Units == "STRING")
                     {
@@ -341,7 +345,7 @@ namespace SimComLib
                             case HR.NOT_CONNECTED: setConnectionStatus(SimCom_Connection_Status.CONNECTION_FAILED); break;
                             default: throw new SimCom_Exception($"Failed to get variable {simVal.VariableRequest.variableName} {hr.ToString()}", hr);
                         }
-                        simVal.setValue((float)varResult);
+                        simVal.setValue(varResult);
                     }
                 }
             }
@@ -381,15 +385,17 @@ namespace SimComLib
         {
             SimVal simVal;
             dynamic value = 0;
-            if (dr.tryConvert(out float fVal))
+            switch (dr.valueSize)
             {
-                value = fVal;
-            }
-            else if (dr.tryConvert(out string sVal))
-            {
-                value = sVal;
-            }
+                case (uint)WaSim_ValueTypes.INT8: if (dr.tryConvert(out SByte int8Val)) value = int8Val; break;
+                case (uint)WaSim_ValueTypes.INT16: if (dr.tryConvert(out Int16 int16Val)) value = int16Val; break;
+                case (uint)WaSim_ValueTypes.INT32: if (dr.tryConvert(out Int32 int32Val)) value = int32Val; break;
+                case (uint)WaSim_ValueTypes.INT64: if (dr.tryConvert(out Int64 int64Val)) value = int64Val; break;
+                case (uint)WaSim_ValueTypes.FLOAT: if (dr.tryConvert(out float floatVal)) value = floatVal; break;
+                case (uint)WaSim_ValueTypes.DOUBLE: if (dr.tryConvert(out double doubleVal)) value = doubleVal; break;
 
+                default: if (dr.tryConvert(out string stringVal)) value = stringVal; break;
+            }
             try
             {
                 simVal = simValIDs[dr.requestId];
