@@ -39,7 +39,9 @@ SimCom does quite some magic with variable names and tries to make things as eas
 This is thanks to the way variable names are passed.
 
 The variableName string consist of 7 parts: VarType:Name:Index,Units,ValueType,Interval,deltaEpsilon
-For example: `A:NAV OBS:1,degrees,FLOAT,1000,0.1`
+For example:
+
+`A:NAV OBS:1,degrees,FLOAT,1000,0.1`
 
 #### VarType
 VarType is optional if you just use the simconnect variables as published on [SimConnect variables](https://docs.flightsimulator.com/html/Programming_Tools/SimVars/Simulation_Variables.htm) and [SimConnect events](https://docs.flightsimulator.com/html/Programming_Tools/Event_IDs/Event_IDs.htm)
