@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.IO;
 
+
 //  SimCom is a wrapper around WASimCommander and SimConnect designed to make the API easier to use.
 //  Variables and events are interacted with using the SimVal class.
 //  SimCom is a work in progress and is not yet ready for production use.
@@ -28,7 +29,9 @@ namespace SimComLib
         Present,
         Installed,
         RestartRequired,
-        Failed
+        CommunityFolderNotFound,
+        FlightSimulatorNotFound,
+        Failed,
     }
 
     public class FlightSimulatorInstallInfo
@@ -102,10 +105,30 @@ namespace SimComLib
                     }
                 }
             }
-            
             return null;
         }
 
+        //  Obtains the networkConfigId from the client_conf.ini file in the this application's folder.
+        public static int getConfigIndex()
+        {
+            string clientConfPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "client_conf.ini");
+            if (File.Exists(clientConfPath))
+            {
+                string[] lines = File.ReadAllLines(clientConfPath);
+                foreach (string line in lines)
+                {
+                    if (line.StartsWith("networkConfigId"))
+                    {
+                        string[] parts = line.Split('=');
+                        if (parts.Length == 2)
+                        {
+                            return int.Parse(parts[1].Trim());
+                        }
+                    }
+                }
+            }
+            return -1;
+        }
 
         //  installModule installs a module into the Community folder of the Flight Simulator installation.
         //  moduleName is assumed to be a folder name in the same folder as the executable.
@@ -116,13 +139,26 @@ namespace SimComLib
             if (fsInfo == null) getInfo(false);
             if (fsInfo == null)
             {
-                Console.WriteLine("Microsoft Flight Simulator not found.");
+                Console.WriteLine("Registry search failed.");
                 return ModuleInstallResult.Failed;
             }
-            string sourcePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, moduleName);
-            string destinationPath = Path.Combine(fsInfo.communityFolder, moduleName);
-            bool copiedFiles = CopyFolder(sourcePath, destinationPath);
-            return copiedFiles && isRunning()? ModuleInstallResult.RestartRequired : ModuleInstallResult.Installed;
+            else
+            {
+                if (fsInfo.installLocation == "")
+                {
+                    Console.WriteLine("Flight Simulator installation not found.");
+                    return ModuleInstallResult.FlightSimulatorNotFound;
+                }
+                if (fsInfo.communityFolder == "")
+                {
+                    Console.WriteLine("Community folder not found.");
+                    return ModuleInstallResult.CommunityFolderNotFound;
+                }
+                string sourcePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, moduleName);
+                string destinationPath = Path.Combine(fsInfo.communityFolder, moduleName);
+                bool copiedFiles = CopyFolder(sourcePath, destinationPath);
+                return copiedFiles && isRunning() ? ModuleInstallResult.RestartRequired : ModuleInstallResult.Installed;
+            }
         }
 
         private static bool CopyFolder(string sourceFolder, string destinationFolder)

@@ -10,20 +10,15 @@ namespace SimCom_Basic_Demo
         {
             InitializeComponent();
             //  Ensure WASimcommander module is installed in the community folder
-            if (FlightSimulatorInstal.installModule("wasimcommander-module") == ModuleInstallResult.RestartRequired)
+            switch (FlightSimulatorInstal.installModule("wasimcommander-module"))
             {
-                TextBox1.Text = "WASimCommander Module installed. Restart Flight Simulator to activate.\n" + TextBox1.Text;
-                return;
+                case ModuleInstallResult.CommunityFolderNotFound: TextBox1.Text = "Microsoft Flight Simulator Community folder not found."; break;
+                case ModuleInstallResult.FlightSimulatorNotFound: TextBox1.Text = "Microsoft Flight Simulator not found."; break;
+                case ModuleInstallResult.RestartRequired: TextBox1.Text = "WASimCommander Module installed. Restart Flight Simulator to activate."; break;
+                case ModuleInstallResult.Installed: TextBox1.Text = "WASimCommander Module installed."; break;
+                //case ModuleInstallResult.Failed: TextBox1.Text = "WASimCommander Module installation failed."; break;
             }
-            SimCom sc = new SimCom(1964);  // 1964 is my birthyear :-) Use any number as an identifier for WASimCommander
-            sc.OnDataChanged += SimCom_OnDataChanged;
-            sc.Connect();
-            sc.GetVariable("Title,string, 2000, 0.0");
-            sc.GetVariable("A:AUTOPILOT HEADING LOCK DIR:degrees, 25, 0.01", "APHDG");
-            sc.GetVariable("HEADING INDICATOR:degrees, 25, 0.001");
-            sc.GetVariable("NAV OBS:1:degrees, 25, 0.01");
-            sc.GetVariable("GEAR_TOGGLE");
-            sc.GetVariable("(A:GEAR LEFT POSITION,number) (A:GEAR RIGHT POSITION,number) + (A:GEAR CENTER POSITION,number) +, 25, 0.05", "GEARPOS");
+
         }
 
         private void SimCom_OnDataChanged(SimCom simCom, SimVal simVal)
@@ -34,6 +29,22 @@ namespace SimCom_Basic_Demo
                 TextBox1.Text = $"{valName}: {simVal.Value}\n" + TextBox1.Text;
             }));
             Console.WriteLine();
+        }
+
+        private void Window_Loaded(object sender, RoutedEventArgs e)
+        {
+            SimCom simCom = new SimCom(1990);  // Use any number as an identifier for WASimCommander
+            simCom.OnDataChanged += SimCom_OnDataChanged;
+            //  Wait untill connected
+            while (!simCom.Connect()) { };
+
+            simCom.GetVariable("Title,string, 2000, 0.0");
+            simCom.GetVariable("A:AUTOPILOT HEADING LOCK DIR:degrees, 50, 0.01", "APHDG");
+            simCom.GetVariable("HEADING INDICATOR:degrees, 50, 0.001");
+            simCom.GetVariable("NAV OBS:1:degrees, 50, 0.01");
+            simCom.GetVariable("GEAR_TOGGLE");
+            simCom.GetVariable("(A:GEAR LEFT POSITION,number) (A:GEAR RIGHT POSITION,number) + (A:GEAR CENTER POSITION,number) +, 25, 0.05", "GEARPOS");
+
         }
     }
 }

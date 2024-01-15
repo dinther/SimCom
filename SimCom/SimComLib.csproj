@@ -20,6 +20,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="client_conf.ini">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="simconnect.cfg">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="wasimcommander-module\ContentInfo\wasimcommander-module\Thumbnail.jpg">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

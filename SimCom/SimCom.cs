@@ -14,6 +14,18 @@ using WASimCommander.CLI.Client;
 namespace SimComLib
 {
     public delegate void SimComDataEventHandler(SimCom SimCom, SimVal SimVal);
+    public delegate void SimComLogEventHandler(SimCom SimCom, LogEventArgs LogData);
+
+    public class LogEventArgs : EventArgs
+    {
+        public LogEventArgs(string LogText)
+        {
+            this.Time = DateTime.Now;
+            this.LogText = LogText;
+        }
+        public DateTime Time { get; }
+        public string LogText { get; }
+    }
 
     public enum SimCom_Connection_Status : byte
     {
@@ -63,7 +75,7 @@ namespace SimComLib
     {
         private WASimClient _client;
         private uint _clientID;
-        private uint _configIndex;
+        private int _configIndex;
         private SimConnectEventReceiver _simConnectEventReceiver;
         private uint definitionIndex = 0;
         private Dictionary<uint, SimVal> simValIDs = new Dictionary<uint, SimVal>();
@@ -77,14 +89,15 @@ namespace SimComLib
                 return _connection_Status;
             }
         }
+        public int ConfigIndex { get { return _configIndex; } }
         public event SimCoMConnectHandler? OnConnection;
         private WaSim_Version? _version;
         public WaSim_Version Version { get { return _version;} }
         public WASimClient WASimclient { get { return _client; } }
-        public SimCom(uint clientID, uint configIndex = 0)
+        public SimCom(uint clientID)
         {
             _clientID = clientID;
-            _configIndex = configIndex;
+            _configIndex = FlightSimulatorInstal.getConfigIndex();
             _client = new WASimClient(_clientID);
             _client.OnClientEvent += _client_OnClientEvent;
             _client.OnDataReceived += _client_OnDataReceived;
@@ -92,6 +105,12 @@ namespace SimComLib
             _simConnectEventReceiver = new SimConnectEventReceiver(_clientID, _configIndex);
             _simConnectEventReceiver.OnEvent += _eventReceiver_OnEvent;
             _simConnectEventReceiver.OnConnection += _eventReceiver_OnConnection;
+            _simConnectEventReceiver.OnLogEvent += _simConnectEventReceiver_OnLogEvent;
+        }
+
+        private void _simConnectEventReceiver_OnLogEvent(SimConnectEventReceiver simConnecteventReceiver, LogEventArgs LogData)
+        {
+            OnLogEvent?.DynamicInvoke(this, LogData);
         }
 
         private bool setConnectionStatus(SimCom_Connection_Status connection_Status)
@@ -127,6 +146,7 @@ namespace SimComLib
                         if ((hr = _client.connectServer()) == HR.OK)
                         {
                             _simConnectEventReceiver.Connect();
+                            
                         } else return setConnectionStatus(SimCom_Connection_Status.CONNECTION_FAILED);
                     } else return setConnectionStatus(SimCom_Connection_Status.CONNECTION_FAILED);
                 } else return setConnectionStatus(SimCom_Connection_Status.CONNECTION_FAILED);
@@ -281,6 +301,7 @@ namespace SimComLib
         }
 
         public event SimComDataEventHandler OnDataChanged;
+        public event SimComLogEventHandler OnLogEvent;
 
         private LookupItemType variableTypeToLookupItemType(char variableType)
         {
@@ -429,9 +450,14 @@ namespace SimComLib
             }
         }
 
+        private void Log(string LogText)
+        {
+            OnLogEvent?.DynamicInvoke(this, new LogEventArgs(LogText));
+        }
+
         private void _client_OnClientEvent(ClientEvent ev)
         {
-            Debug.WriteLine($"Client event {ev.eventType} - \"{ev.message}\"; Client status: {ev.status}");
+            Log($"Client event {ev.eventType} - \"{ev.message}\"; Client status: {ev.status}");
         }
 
         private void _eventReceiver_OnEvent(SimVal SimVal, EventArgs e)
