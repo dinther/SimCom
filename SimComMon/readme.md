@@ -163,3 +163,9 @@ SimComMon.exe --AUTOPILOT HEADING LOCK DIR,Degrees,INT32,100,1 as APHDG=123
 ```
 
 This causes the AUTOPILOT HEADING LOCK DIR variable to be set to 123 degrees once and reported on 'APHDG=123' and after that it will be reported on again under the name `APHDG` if it changes by at least 1 degrees and it has been at least 100 milli seconds since the last report.
+
+```
+SimComMon.exe --PLANE LATITUDE,degrees=-37.0171754 --PLANE LONGITUDE,degrees=174.7676331 --PLANE HEADING DEGREES MAGNETIC,degrees=50
+```
+
+This will instantly teleport you above the treshold of runway 05 in Auckland, New Zealand and facing runway heading. [Lot's of options here](https://docs.flightsimulator.com/html/Programming_Tools/SimVars/Aircraft_SimVars/Aircraft_Misc_Variables.htm#PLANE_LATITUDE)
