@@ -3,6 +3,9 @@ SimComMon is a command line demo app to showcase the SimCom library. Undfer the 
 
 The program can get, set and/or monitor most variables in microsoft flight simulator 2020 via the command line. It reports to STD OUT.
 
+![image](https://github.com/dinther/SimCom/assets/1192916/648e6b23-ba6f-4e89-b221-b34efe9db4e7)
+
+
 SimCom can handle
 - [SimConnect variables](https://docs.flightsimulator.com/html/Programming_Tools/SimVars/Simulation_Variables.htm)
 - [SimConnect events](https://docs.flightsimulator.com/html/Programming_Tools/Event_IDs/Event_IDs.htm)
