@@ -15,16 +15,6 @@ namespace SimComLib
 {
     public delegate void SimComDataEventHandler(SimCom SimCom, SimVal SimVal);
 
-    public struct ValueTypes1
-    {
-        public const uint DATA_TYPE_INT8 = uint.MaxValue;
-        public const uint DATA_TYPE_INT16 = 4294967294;
-        public const uint DATA_TYPE_INT32 = 4294967293;
-        public const uint DATA_TYPE_INT64 = 4294967292;
-        public const uint DATA_TYPE_FLOAT = 4294967291;
-        public const uint DATA_TYPE_DOUBLE = 4294967290;
-    }
-
     public enum SimCom_Connection_Status : byte
     {
         NOT_CONNECTED = 0,
@@ -40,6 +30,7 @@ namespace SimComLib
         INT64 = 4294967292,
         FLOAT = 4294967291,
         DOUBLE = 4294967290,
+        STRING = 32
     }
 
     public class WaSim_Version
@@ -205,6 +196,7 @@ namespace SimComLib
                         deltaEpsilon: (float)Math.Max(0, simVal.DeltaEpsilon)
                     );
                 }
+                /*
                 else if (simVal.Units == "STRING")
                 {
                     dataRequest = new DataRequest(
@@ -217,6 +209,7 @@ namespace SimComLib
                         deltaEpsilon: 0.0f
                     );
                 }
+                */
                 else if (VarType == '\0')
                 {
                     dataRequest = new DataRequest(
@@ -224,7 +217,7 @@ namespace SimComLib
                         simVarName: simVal.Name,
                         unitName: simVal.Units,
                         simVarIndex: simVal.Index == 255 ? (Byte)0 : simVal.Index,
-                        valueSize: (uint)simVal.ValueType, //WaSim_ValueTypes.FLOAT,// (uint)4294967291,
+                        valueSize: (uint)simVal.ValueType,
                         period: updatePeriod,
                         interval: Math.Max(simVal.Interval, 25),
                         deltaEpsilon: (float)Math.Max(0, simVal.DeltaEpsilon)
@@ -236,7 +229,7 @@ namespace SimComLib
                         requestId: definitionIndex,
                         variableType: VarType,
                         variableName: simVal.Name,
-                        valueSize: (uint)4294967291,
+                        valueSize: (uint)simVal.ValueType,//WaSim_ValueTypes.DOUBLE,//4294967291,
                         period: updatePeriod,
                         interval: Math.Max(simVal.Interval, 25),
                         deltaEpsilon: (float)Math.Max(0, simVal.DeltaEpsilon)
@@ -355,7 +348,6 @@ namespace SimComLib
                             case WaSim_ValueTypes.INT64: simVal.setValue((Int64)varResult); break;
                             case WaSim_ValueTypes.FLOAT: simVal.setValue((float)varResult); break;
                             case WaSim_ValueTypes.DOUBLE: simVal.setValue((double)varResult); break;
-                            default: simVal.setValue(varResult); break;
                         }
                     }
                 }

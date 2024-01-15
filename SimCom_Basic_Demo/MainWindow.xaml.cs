@@ -13,18 +13,19 @@ namespace SimCom_Basic_Demo
             sc.OnDataChanged += SimCom_OnDataChanged;
             sc.Connect();
             sc.GetVariable("Title,string, 2000, 0.0");
-            sc.GetVariable("A:AUTOPILOT HEADING LOCK DIR:degrees, 25, 0.01");
+            sc.GetVariable("A:AUTOPILOT HEADING LOCK DIR:degrees, 25, 0.01", "APHDG");
             sc.GetVariable("HEADING INDICATOR:degrees, 25, 0.001");
             sc.GetVariable("NAV OBS:1:degrees, 25, 0.01");
             sc.GetVariable("GEAR_TOGGLE");
-            sc.GetVariable("(A:GEAR LEFT POSITION,number) (A:GEAR RIGHT POSITION,number) + (A:GEAR CENTER POSITION,number) +, 25, 0.5");
+            sc.GetVariable("(A:GEAR LEFT POSITION,number) (A:GEAR RIGHT POSITION,number) + (A:GEAR CENTER POSITION,number) +, 25, 0.05", "GEARPOS");
         }
 
         private void SimCom_OnDataChanged(SimCom simCom, SimVal simVal)
         {
             Dispatcher.BeginInvoke(new Action(() => //  You must use Dispatcher.BeginInvoke to jump back to your UI thread.
             {
-                TextBox1.Text = $"{simVal.FullName}: {simVal.Value}\n" + TextBox1.Text;
+                string valName = simVal.Alias == "" ? simVal.FullName : simVal.Alias;
+                TextBox1.Text = $"{valName}: {simVal.Value}\n" + TextBox1.Text;
             }));
             Console.WriteLine();
         }

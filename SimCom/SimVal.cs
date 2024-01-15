@@ -282,6 +282,7 @@ namespace SimComLib
             if (values.Length > i && !decimal.TryParse(values[i].TrimEnd(charsToTrim), out numberTest) && !_valueTypeStrings.Contains(values[i].ToUpper()))
             {
                 Units = values[i].TrimEnd(charsToTrim);
+                if (Units == "STRING") ValueType = WaSim_ValueTypes.STRING;
                 i++;
             }
 

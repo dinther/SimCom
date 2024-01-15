@@ -98,8 +98,8 @@ namespace SimCom_HSI_Demo
 
         private void initVariables()
         {
+            AircraftName = simCom.GetVariable("Title,string,2000");
             Radial = simCom.GetVariable("A:NAV OBS:1,degrees,25,0.01");
-            AircraftName = simCom.GetVariable("Title,string,2000, 0.0");
             GearPos = simCom.GetVariable("(A:GEAR LEFT POSITION,number) (A:GEAR RIGHT POSITION,number) + (A:GEAR CENTER POSITION,number) +,25, 0.1");
             HeadingBug = simCom.GetVariable("A:AUTOPILOT HEADING LOCK DIR,degrees,25, 0.01");
             Heading = simCom.GetVariable("HEADING INDICATOR,degrees, 25, 0.1");
