@@ -1,5 +1,11 @@
 ﻿using SimComLib;
 
+//  Ensure WASimcommander module is installed in the community folder
+if (FlightSimulatorInstal.installModule("wasimcommander-module") == ModuleInstallResult.RestartRequired)
+{
+    Console.WriteLine("WASimCommander Module installed. Restart Flight Simulator to activate.");
+    return;
+}
 
 SimCom sc = new SimCom(1964);
 sc.OnConnection += Sc_OnConnection;

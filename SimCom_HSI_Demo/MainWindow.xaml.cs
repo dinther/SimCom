@@ -61,6 +61,12 @@ namespace SimCom_HSI_Demo
         {
             InitializeComponent();
 
+            //  Ensure WASimcommander module is installed in the community folder
+            if (FlightSimulatorInstal.installModule("wasimcommander-module") == ModuleInstallResult.RestartRequired)
+            {
+                statusText.Text = "WASimCommander Module installed. Restart Flight Simulator to activate.\n";
+            }
+
             simCom = new SimCom(1964);
             simCom.OnDataChanged += SimCom_OnDataChanged;
             simCom.OnConnection += SimCom_OnConnection;

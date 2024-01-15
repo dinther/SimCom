@@ -9,6 +9,12 @@ namespace SimCom_Basic_Demo
         public MainWindow()
         {
             InitializeComponent();
+            //  Ensure WASimcommander module is installed in the community folder
+            if (FlightSimulatorInstal.installModule("wasimcommander-module") == ModuleInstallResult.RestartRequired)
+            {
+                TextBox1.Text = "WASimCommander Module installed. Restart Flight Simulator to activate.\n" + TextBox1.Text;
+                return;
+            }
             SimCom sc = new SimCom(1964);  // 1964 is my birthyear :-) Use any number as an identifier for WASimCommander
             sc.OnDataChanged += SimCom_OnDataChanged;
             sc.Connect();

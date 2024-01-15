@@ -23,6 +23,12 @@
 //  https://github.com/dinther/SimCom
 //  SimCom is written by Paul van Dinther.
 
+//  Ensure WASimcommander module is installed in the community folder
+if (FlightSimulatorInstal.installModule("wasimcommander-module") == ModuleInstallResult.RestartRequired)
+{
+    Console.WriteLine("WASimCommander Module installed. Restart Flight Simulator to activate.");
+    return;
+}
 
 SimCom simCom = new SimCom(1964);
 simCom.OnDataChanged += SimCom_OnDataChanged;
