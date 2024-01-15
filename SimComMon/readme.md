@@ -12,14 +12,14 @@ This will cause the program to connect to MSFS and return the value of the headi
 
 ```
 HEADING INDICATOR=34.90064381147878
-APHDG=126
+AUTOPILOT HEADING LOCK DIR=126
 ```
 
 For long names with spaces you might was to pass an alias name like this:
 
 ```SimComMon.exe --A:HEADING INDICATOR,degrees as HDG```
 
-This results in
+This causes SimComMon to report that variable by it's alias name.
 
 ```HDG=35.87491068468636```
 
@@ -54,30 +54,52 @@ By default SimCom will use Number as units and thus leaves it up to MSFS what un
 This is optional and used when dealing with numbers only. By default a 8 byte double floating point variable is assumed unless the Units is "STRING" in which case the default ValueType is assumed to be a string.
 
 Possible value types are "INT8", "INT16", "INT32", "INT64", "FLOAT", "DOUBLE"
+INT causes the number to be reported without fractions. The number following INT defines the resolution of the Integer in bits.
+INT8 = 0 - 255
+INT16 = 0 - 65025
+INT32 = 0 - 4228250625
+INT64 = 0 - 17878103347812890625 (Just in case you wanted to know)
+
+FLOAT is a 4 byte value representing a floating point value. It's fine in most cases but with modern 64 bit computers the performance difference is minimal. 
+
+DOUBLE is a 8 byte value representing a floating point value with much higher precision.
+This is the default ValueType if none is provided. 
+
+It can be useful if you want a variable to be reported in whole numbers without the decimal. For example
+```
+SimComMon.exe --HEADING INDICATOR,degrees,INT32,500
+```
+produces
+```
+HEADING INDICATOR=34
+```
+
+You could use an INT16 here as well because the values for heading in degrees ranges from 0 to 359. However INT8 does not have enough resolution as it casn only hold values from 0 to 255.
 
 #### Interval
 This is optional. When no interval is given SimComMon will read the variable once only. Interval duration is given in milliseconds. Therefore a value of 1000 causes the variable to be reported on once every second. However, this will only repeat if the value actually changed. The minimum possible interval is 25 milli seconds.
 
 #### DeltaEpsilon
-This is optional. DeltaEpsilon is only relevant when interval is set. DeltaEpsilon defines how much the variable must have changed since the last report before it is reported again. this prevents the output to be swamped with tiny irrelevant changes. for example. `--HEADING INDICATOR,500`
+This is optional. DeltaEpsilon is only relevant when interval is set. DeltaEpsilon defines how much the variable must have changed since the last report before it is reported again. this prevents the output to be swamped with tiny irrelevant changes. for example.
+```
+SimComMon.exe --HEADING INDICATOR,500
+```
 will cause SimComMon to report the tiniest changes of the aircraft heading but only once every 500 milli seconds.
-`--HEADING INDICATOR,500,1` will cause SimComMon to report the aircraft heading change only when it changed more than when it reported last and only if at least 500 milliseconds have passed.
+```
+SimComMon.exe --HEADING INDICATOR,500,1
+```
+will cause SimComMon to report the aircraft heading change only when it changed more than when it reported last and only if at least 500 milliseconds have passed.
 
 ## Set Variables
 SimComMon can also set variables in MSFS. The syntax for the variable names is identical to reading variables but in addition the variable definition also has an equals sign and a value. For example:
-```--AUTOPILOT HEADING LOCK DIR,Degrees=123```
+```
+SimComMon.exe --AUTOPILOT HEADING LOCK DIR,Degrees=123
+```
 This causes the Autopilot heading bug to be set to 123 degrees after which the program terminates.
 Pass an interval if you also wish to monitor the variable.
 
-```--AUTOPILOT HEADING LOCK DIR,Degrees,INT32,100,1 as APHDG=123```
+```
+SimComMon.exe --AUTOPILOT HEADING LOCK DIR,Degrees,INT32,100,1 as APHDG=123
+```
 
-This causes the AUTOPILOT HEADING LOCK DIR variable to be set to 123 degrees once and reported on 'APHDG=123' and after that it will be reported on again under the name `APHDG` if it changes by at least 1 degrees and it has been at least 100 milli seconds since the last report
-
-### Command line examples
-
-
-
-
-
-![image](https://github.com/dinther/SimCom/assets/1192916/f2e4c98b-3921-48c3-92cd-f31405b60f75)
-
+This causes the AUTOPILOT HEADING LOCK DIR variable to be set to 123 degrees once and reported on 'APHDG=123' and after that it will be reported on again under the name `APHDG` if it changes by at least 1 degrees and it has been at least 100 milli seconds since the last report.
