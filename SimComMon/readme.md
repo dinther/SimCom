@@ -4,10 +4,10 @@ SimComMon is a command line demo app to showcase the SimCom library. Undfer the 
 The program can get, set and/or monitor most variables in microsoft flight simulator 2020 via the command line. It reports to STD OUT.
 
 SimCom can handle
-[SimConnect variables](https://docs.flightsimulator.com/html/Programming_Tools/SimVars/Simulation_Variables.htm)
-[SimConnect events](https://docs.flightsimulator.com/html/Programming_Tools/Event_IDs/Event_IDs.htm)
-[Calculated variables](https://docs.flightsimulator.com/html/Additional_Information/Reverse_Polish_Notation.htm)
-Custom variables and whatever else WASimcommander can do.
+- [SimConnect variables](https://docs.flightsimulator.com/html/Programming_Tools/SimVars/Simulation_Variables.htm)
+- [SimConnect events](https://docs.flightsimulator.com/html/Programming_Tools/Event_IDs/Event_IDs.htm)
+- [Calculated variables](https://docs.flightsimulator.com/html/Additional_Information/Reverse_Polish_Notation.htm)
+- Custom variables and whatever else WASimcommander can do.
 
 Pass one or more variable definitions on the command line each definition preceded with a double dash `--`
 
@@ -48,6 +48,7 @@ SimCom considers variables and events the same thanks to the power of the WASimC
 
 #### Name
 This is required. This can be a simconnect variable name or a simconnect event name but also custom variables and even calculated vsariables all thanks the power of the WASimCommander library.
+The name part can be as simple as `TITLE` or a represent a calculation more about calculations later.
 
 #### Index
 Some variables also require an index value. For examle `NAV OBS:1` The index follows after the variable name separated by a colon as shown.
@@ -97,6 +98,58 @@ will cause SimComMon to report the tiniest changes of the aircraft heading but o
 SimComMon.exe --HEADING INDICATOR,500,1
 ```
 will cause SimComMon to report the aircraft heading change only when it changed more than when it reported last and only if at least 500 milliseconds have passed.
+
+### Calculated values
+
+Often it will be useful to have basic calculations done on variables MSFS before itis handed over. For example, you want to know if all three wheels of the landing gear are fully down and locked. For this you could use three separate variables and do the calculation your self like. Each wheel position is reported between 0 (UP) and 1(DOWN). Add all three together and gear is down and locked when the value is three.
+```
+SimComMon.exe --A:GEAR LEFT POSITION,number,50,0.2 --A:GEAR RIGHT POSITION,number,50,0.2 --A:GEAR CENTER POSITION,number,50,0.2
+```
+This results in a jumble of numbers.
+```
+GEAR LEFT POSITION=0
+GEAR RIGHT POSITION=0
+GEAR CENTER POSITION=0
+GEAR LEFT POSITION=0.21944746538065374
+GEAR RIGHT POSITION=0.21944746538065374
+GEAR CENTER POSITION=0.21944746538065374
+GEAR LEFT POSITION=0.41945029818452895
+GEAR RIGHT POSITION=0.41945029818452895
+GEAR CENTER POSITION=0.41945029818452895
+GEAR LEFT POSITION=0.6194617638830096
+GEAR RIGHT POSITION=0.6194617638830096
+GEAR CENTER POSITION=0.6194617638830096
+GEAR LEFT POSITION=0.8194797981996089
+GEAR RIGHT POSITION=0.8194797981996089
+GEAR CENTER POSITION=0.8194797981996089
+```
+
+Or you can make use of the polish notation (RPN) build into MSFS
+
+```
+SimComMon.exe --(A:GEAR LEFT POSITION,number) (A:GEAR RIGHT POSITION,number) + (A:GEAR CENTER POSITION,number) +,50, 0.1 as GEARPOS
+```
+
+This produces a much easier to consume output
+```
+GEARPOS=0
+GEARPOS=0.2250001011416316
+GEARPOS=0.42500940011814237
+GEARPOS=0.6250109011307359
+GEARPOS=0.8250270020216703
+GEARPOS=1.0916999001055956
+GEARPOS=1.2917016972787678
+GEARPOS=1.4917150000110269
+GEARPOS=1.6917260996997356
+GEARPOS=1.958385399542749
+GEARPOS=2.15840370208025
+GEARPOS=2.358406703453511
+GEARPOS=2.5584116033278406
+GEARPOS=2.8251011995598674
+```
+
+More about [Polish notation here](https://docs.flightsimulator.com/html/Additional_Information/Reverse_Polish_Notation.htm)
+
 
 ## Set Variables
 SimComMon can also set variables in MSFS. The syntax for the variable names is identical to reading variables but in addition the variable definition also has an equals sign and a value. For example:
