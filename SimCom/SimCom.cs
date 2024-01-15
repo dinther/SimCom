@@ -153,7 +153,7 @@ namespace SimComLib
         }
 
 
-        //  GetVariable The variableName string consist of 6 parts: 'Type':"Name":Index,"Units",Interval,deltaEpsilon
+        //  GetVariable The variableName string consist of 7 parts: VarType:Name:Index,Units,ValueType,Interval,deltaEpsilon
         //
         //  Example: "A:NAV OBS:1,degrees,type,1000,0.1"
         //
@@ -267,7 +267,7 @@ namespace SimComLib
             return simVal;
         }
 
-        public void setVariable(SimVal simVal, dynamic value)
+        public SimVal SetVariable(SimVal simVal, dynamic value)
         {
             HR hr;
             if (simVal.Units == "STRING")
@@ -284,6 +284,7 @@ namespace SimComLib
                     default: throw new SimCom_Exception($"Failed to set variable {simVal.FullName} {hr.ToString()}", hr);
                 }
             }
+            return simVal;
         }
 
         public event SimComDataEventHandler OnDataChanged;
@@ -424,11 +425,6 @@ namespace SimComLib
                 }
                 simVal.SetInitialised();
             }
-        }
-
-        private void _client_OnLogRecordReceived(LogRecord A_0, LogSource A_1)
-        {
-            throw new NotImplementedException();
         }
 
         private void _client_OnClientEvent(ClientEvent ev)

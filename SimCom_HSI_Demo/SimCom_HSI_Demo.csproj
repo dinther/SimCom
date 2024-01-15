@@ -61,6 +61,12 @@
     <Resource Include="HSI\HSI_Rose_Text.png" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="client_conf.ini">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
     <Exec Command="xcopy &quot;C:\MSFS SDK\SimConnect SDK\lib\SimConnect.dll&quot; &quot;$(TargetDir)&quot; /y&#xD;&#xA;xcopy &quot;C:\MSFS SDK\WASimCommander\lib\managed\net6\Ijwhost.dll&quot; &quot;$(TargetDir)&quot; /y" />
   </Target>

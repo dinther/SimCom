@@ -116,7 +116,7 @@ namespace SimComLib
 
         public dynamic Set(dynamic Value)
         {
-            _simCom.setVariable(this, Value);
+            _simCom.SetVariable(this, Value);
             OldValue = _value;
             _value = Value;
             return Value;
@@ -216,7 +216,7 @@ namespace SimComLib
             }
         }
 
-        //  splitVariableName The variableName string consist of 7 parts: 'VarType':"Name":Index,"Units","type",Interval,deltaEpsilon
+        //  splitVariableName The variableName string consist of 7 parts: VarType:Name:Index,Units,ValueType,Interval,deltaEpsilon
         //
         //  Example: "A:NAV OBS:1,degrees,FLOAT,1000,0.1"
         //

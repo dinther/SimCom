@@ -20,8 +20,8 @@ void Sc_OnConnection(SimCom simCom, SimCom_Connection_Status Connection_Status)
         case SimCom_Connection_Status.CONNECTED:
             {
                 SimVal simVal = sc.GetVariable(args[0]);
-                if (simVal.Units == "STRING") sc.setVariable(simVal, args[1]);
-                else sc.setVariable(simVal, System.Convert.ToDouble(args[1]));
+                if (simVal.Units == "STRING") sc.SetVariable(simVal, args[1]);
+                else sc.SetVariable(simVal, System.Convert.ToDouble(args[1]));
                 break;
             }
     };
