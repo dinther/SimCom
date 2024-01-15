@@ -1,8 +1,0 @@
-{
-  "profiles": {
-    "SimComSet": {
-      "commandName": "Project",
-      "commandLineArgs": "\"AUTOPILOT HEADING LOCK DIR,Degrees,100\" 123"
-    }
-  }
-}
