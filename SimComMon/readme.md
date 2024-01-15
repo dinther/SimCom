@@ -124,7 +124,7 @@ GEAR RIGHT POSITION=0.8194797981996089
 GEAR CENTER POSITION=0.8194797981996089
 ```
 
-Or you can make use of the polish notation (RPN) build into MSFS
+Or you can make use of the [Reverse Polish Notation (RPN) build into MSFS](https://docs.flightsimulator.com/html/Additional_Information/Reverse_Polish_Notation.htm) syntax to make calculations.
 
 ```
 SimComMon.exe --(A:GEAR LEFT POSITION,number) (A:GEAR RIGHT POSITION,number) + (A:GEAR CENTER POSITION,number) +,50, 0.1 as GEARPOS
@@ -147,9 +147,6 @@ GEARPOS=2.358406703453511
 GEARPOS=2.5584116033278406
 GEARPOS=2.8251011995598674
 ```
-
-More about [Polish notation here](https://docs.flightsimulator.com/html/Additional_Information/Reverse_Polish_Notation.htm)
-
 
 ## Set Variables
 SimComMon can also set variables in MSFS. The syntax for the variable names is identical to reading variables but in addition the variable definition also has an equals sign and a value. For example:
