@@ -3,6 +3,7 @@ using WASimCommander.CLI.Enums;
 using WASimCommander.CLI.Structs;
 using WASimCommander.CLI.Client;
 using System.Xml.Linq;
+using System.Runtime.CompilerServices;
 
 //  SimCom is a wrapper around WASimCommander and SimConnect designed to make the API easier to use.
 //  Variables and events are interacted with using the SimVal class.
@@ -19,15 +20,21 @@ namespace SimComLib
 
     public class LogEventArgs : EventArgs
     {
-        public LogEventArgs(SimCom_Log_Level LogLevel, string LogText)
+        public LogEventArgs(SimCom_Log_Level LogLevel, string LogText, int LineNumber, string Caller, string SourceFile)
         {
             this.Log_Level = LogLevel;
             this.Time = DateTime.Now;
             this.LogText = LogText;
+            this.LineNumber = LineNumber;
+            this.Caller = Caller;
+            this.SourceFile = SourceFile;
         }
         public SimCom_Log_Level Log_Level { get; }
         public DateTime Time { get; }
         public string LogText { get; }
+        public int LineNumber { get; }
+        public string Caller { get; }
+        public string SourceFile { get; }
     }
 
     public enum SimCom_Log_Level : byte
@@ -349,12 +356,7 @@ namespace SimComLib
             }
 
             getVariableValue(simVal);
-            /*
-            if (init)
-            {
-                DoOnDataReceived(simVal);
-            }
-            */
+
             return simVal;
         }
 
@@ -379,6 +381,9 @@ namespace SimComLib
                     case HR.NOT_CONNECTED: setConnectionStatus(SimCom_Connection_Status.CONNECTION_FAILED); break;
                     default: throw new SimCom_Exception($"Failed to set variable {simVal.FullName} {hr.ToString()}", hr);
                 }
+            } else
+            {
+                this.Calc(simVal.FullName);
             }
             return simVal;
         }
@@ -411,7 +416,7 @@ namespace SimComLib
             return new VariableRequest(variableType, name, units);
         }
 
-        private bool getVariableValue(SimVal simVal)
+        public bool getVariableValue(SimVal simVal)
         {
             HR hr;
             if (simVal.IsRPN)
@@ -461,22 +466,26 @@ namespace SimComLib
 
         public dynamic Calc(string calcCode, bool isString = false)
         {
-            HR hr = _client.executeCalculatorCode(calcCode, CalcResultType.Double, out double fResult, out string sResult);
-            switch (hr)
+            if (calcCode != "")
             {
-                case HR.OK: break;
-                case HR.NOT_CONNECTED: setConnectionStatus(SimCom_Connection_Status.CONNECTION_FAILED); break;
-                default: throw new SimCom_Exception($"Failed to execute calcCode {calcCode} {hr.ToString()}", hr);
-            }
+                HR hr = _client.executeCalculatorCode(calcCode, CalcResultType.Double, out double fResult, out string sResult);
+                switch (hr)
+                {
+                    case HR.OK: break;
+                    case HR.NOT_CONNECTED: setConnectionStatus(SimCom_Connection_Status.CONNECTION_FAILED); break;
+                    //default: throw new SimCom_Exception($"Failed to execute calcCode {calcCode} {hr.ToString()}", hr);
+                }
 
-            if (isString)
-            {
-                return sResult;
+                if (isString)
+                {
+                    return sResult;
+                }
+                else
+                {
+                    return fResult;
+                }
             }
-            else
-            {
-                return fResult;
-            }
+            return null;
         }
 
         private bool getCalculatedVariable(SimVal simVal)
@@ -528,9 +537,9 @@ namespace SimComLib
             }
         }
 
-        public void Log(SimCom_Log_Level logLevel, string LogText)
+        public void Log(SimCom_Log_Level logLevel, string LogText, [CallerLineNumber] int lineNumber = 0, [CallerMemberName] string caller = null, [CallerFilePath] string sourceFile = null)
         {
-            OnLogEvent?.DynamicInvoke(this, new LogEventArgs(logLevel, LogText));
+            OnLogEvent?.DynamicInvoke(this, new LogEventArgs(logLevel, LogText, lineNumber, caller, sourceFile));
         }
 
         private void _client_OnClientEvent(ClientEvent ev)

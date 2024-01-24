@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Microsoft.FlightSimulator.SimConnect;
 using System.Diagnostics;
 using WASimCommander.CLI.Enums;
+using System.Runtime.CompilerServices;
 
 namespace SimComLib
 {
@@ -65,7 +66,7 @@ namespace SimComLib
 
         public bool Connect()
         {
-            Debug.WriteLine(_simConnect);
+            Console.WriteLine(_simConnect);
             try
             {
                 if (_simConnect == null)
@@ -160,9 +161,9 @@ namespace SimComLib
             Log(SimCom_Log_Level.Info, "ReceiveMessages task stopped.");
         }
 
-        private void Log(SimCom_Log_Level logLevel ,string LogText)
+        private void Log(SimCom_Log_Level logLevel ,string LogText, [CallerLineNumber] int lineNumber = 0, [CallerMemberName] string caller = null, [CallerFilePath] string sourceFile = null)
         {
-            OnLogEvent?.DynamicInvoke(this, new LogEventArgs(logLevel, LogText));
+            OnLogEvent?.DynamicInvoke(this, new LogEventArgs(logLevel, LogText, lineNumber, caller, sourceFile));
         }
 
         private void SimConnect_OnRecvOpen(SimConnect sender, SIMCONNECT_RECV_OPEN data)
@@ -183,7 +184,7 @@ namespace SimComLib
         private void simConnect_OnRecvEvent(SimConnect sender, SIMCONNECT_RECV_EVENT recEvent)
         {
             SimVal simVal = simEventVals[(uint)recEvent.uEventID];
-            Log(SimCom_Log_Level.Info, $"OnRecvEvent: {simVal.FullName} ( {simVal.Value} )");
+            Log(SimCom_Log_Level.Info, $"OnRecvEvent: {simVal.FullName} Value: {simVal.Value}");
             simVal.SetValue(recEvent.dwData);
             OnEvent?.Invoke(simVal, new EventArgs());
         }

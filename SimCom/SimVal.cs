@@ -123,9 +123,20 @@ namespace SimComLib
             {
                 if (_units != "STRING") _delta = value - _value;
                 else _delta = (double)0;
-                _value = value;
-                DoOnChanged();
+                if (_value != value)
+                {
+                    _value = value;
+                    DoOnChanged();
+                    _delta = (double)0;
+                } else
+                {
+                    _value = value;
+                }
+                
                 _newValue = value;
+            } else
+            {
+                //_delta = (double)0;
             }
             return _value;
         }
@@ -140,6 +151,10 @@ namespace SimComLib
                 //_newValue = NewValue;
                 _simCom.SetVariable(this, NewValue);
                 DoOnChanged();
+                _delta = (double)0;
+            } else
+            {
+                //_delta = (double)0;
             }
             return _value;
         }
@@ -219,6 +234,12 @@ namespace SimComLib
             return Set(newValue);
         }
 
+        public dynamic Refresh()
+        {
+            this._simCom.getVariableValue(this);
+            this._simCom.Log(SimCom_Log_Level.Debug, $"Refresh {this._nameIndex}._value= {this._value}");
+            return _value;
+        }
 
         private static bool isRPN(string variableName)
         {
