@@ -34,6 +34,7 @@ switch (FlightSimulatorInstal.installModule("wasimcommander-module"))
     case ModuleInstallResult.Failed: Console.WriteLine("WASimCommander Module installation failed."); break;
 }
 
+SimCom_Log_Level logLevel = SimCom_Log_Level.None; //  no logging on std-out by default
 SimCom simCom = new SimCom(1995);
 simCom.OnDataChanged += SimCom_OnDataChanged;
 simCom.OnConnection += SimCom_OnConnection;
@@ -41,17 +42,18 @@ simCom.OnLogEvent += SimCom_OnLogEvent;
 
 void SimCom_OnLogEvent(SimCom SimCom, LogEventArgs LogData)
 {
-    Console.WriteLine($"{LogData.Time.ToString("MM-dd:HH:mm:ssf")}: {LogData.LogText}");
+    if ( LogData.Log_Level <= logLevel)
+    {
+        Console.WriteLine($"{LogData.Time.ToString("MM-dd:HH:mm:ssf")} [{SimCom.LogLevelToString(LogData.Log_Level)}]: {LogData.LogText}");
+    }
+    
 }
 
 bool monitor = true;
 simCom.Connect();
 
 
-while (simCom.Connection_Status == SimCom_Connection_Status.NOT_CONNECTED || monitor)
-{
-
-}
+while (simCom.Connection_Status == SimCom_Connection_Status.NOT_CONNECTED || monitor){ }
 
 void SimCom_OnConnection(SimCom simCom, SimCom_Connection_Status Connection_Status)
 {
@@ -65,6 +67,7 @@ void SimCom_OnConnection(SimCom simCom, SimCom_Connection_Status Connection_Stat
             Console.WriteLine($"Incorrect parameters.\n");
             return;
         }
+
         bool needMonitor = false;
         for (int i = 1; i < valueDefs.Length; i++)
         {
@@ -73,42 +76,58 @@ void SimCom_OnConnection(SimCom simCom, SimCom_Connection_Status Connection_Stat
             bool equals = false;
             string alias = "";
             string value = "";
+
             string valueDef = valueDefs[i].Trim().Replace(" as ", "|as|").Replace(" AS ", "|as|").Replace("=", "|=|");
             if (valueDef != "")
             {
-                equals = valueDef.Contains("|=|");
-                asAlias = valueDef.Contains("|as|");
-                string[] valueParams = valueDef.Split('|');
-                if (valueParams.Length > 0)
+                if (valueDef.ToLower().StartsWith("log"))
                 {
-                    name = valueParams[0].Trim();
+                    string[] logParam = valueDef.Split('|');
+                    if (logParam.Length == 3)
+                    {
+                        logLevel = SimCom.StringToLogLevel(logParam[2]);
+                        if (logLevel >= SimCom_Log_Level.Info)
+                        {
+                            simCom.Log(SimCom_Log_Level.Info, $"Log level set to {SimCom.LogLevelToString(logLevel)}");
+                        }
+                    }
                 }
-
-                if (valueParams.Length == 3 && equals && !asAlias)
+                else
                 {
-                    value = valueParams[2].Trim();
-                }
+                    equals = valueDef.Contains("|=|");
+                    asAlias = valueDef.Contains("|as|");
+                    string[] valueParams = valueDef.Split('|');
+                    if (valueParams.Length > 0)
+                    {
+                        name = valueParams[0].Trim();
+                    }
 
-                if (valueParams.Length == 3 && !equals && asAlias)
-                {
-                    alias = valueParams[2].Trim();
-                }
+                    if (valueParams.Length == 3 && equals && !asAlias)
+                    {
+                        value = valueParams[2].Trim();
+                    }
 
-                if (valueParams.Length == 5)
-                {
-                    alias = valueParams[2].Trim(); value = valueParams[4].Trim();
-                }
+                    if (valueParams.Length == 3 && !equals && asAlias)
+                    {
+                        alias = valueParams[2].Trim();
+                    }
 
-                SimVal simVal = simCom.GetVariable(name, alias, null);
-                if (value != "")
-                {
-                    if (simVal.Units == "STRING") simCom.SetVariable(simVal, value);
-                    else simCom.SetVariable(simVal, System.Convert.ToDouble(value));
-                }
+                    if (valueParams.Length == 5)
+                    {
+                        alias = valueParams[2].Trim(); value = valueParams[4].Trim();
+                    }
 
-                if (simVal.Interval > 0)
-                {
-                    needMonitor = true;
+                    SimVal simVal = simCom.GetVariable(name, alias, null);
+                    if (value != "")
+                    {
+                        if (simVal.Units == "STRING") simCom.SetVariable(simVal, value);
+                        else simCom.SetVariable(simVal, System.Convert.ToDouble(value));
+                    }
+
+                    if (simVal.Interval > 0)
+                    {
+                        needMonitor = true;
+                    }
                 }
             }
         }

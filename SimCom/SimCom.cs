@@ -2,6 +2,7 @@
 using WASimCommander.CLI.Enums;
 using WASimCommander.CLI.Structs;
 using WASimCommander.CLI.Client;
+using System.Xml.Linq;
 
 //  SimCom is a wrapper around WASimCommander and SimConnect designed to make the API easier to use.
 //  Variables and events are interacted with using the SimVal class.
@@ -18,13 +19,26 @@ namespace SimComLib
 
     public class LogEventArgs : EventArgs
     {
-        public LogEventArgs(string LogText)
+        public LogEventArgs(SimCom_Log_Level LogLevel, string LogText)
         {
+            this.Log_Level = LogLevel;
             this.Time = DateTime.Now;
             this.LogText = LogText;
         }
+        public SimCom_Log_Level Log_Level { get; }
         public DateTime Time { get; }
         public string LogText { get; }
+    }
+
+    public enum SimCom_Log_Level : byte
+    {
+        None=0,       //  Disables logging
+        Critical=1,   //  Events which cause termination.
+        Error=2,      //  Hard errors preventing function execution.
+        Warning=3,    //  Possible anomalies which do not necessarily prevent execution.
+        Info=4,       //  Informational messages about key processes like startup and shutdown.
+        Debug=5,      //  Verbose debugging information.
+        Trace=6       //  Very verbose and frequent debugging data, do not use with "slow" logger outputs.
     }
 
     public enum SimCom_Connection_Status : byte
@@ -89,9 +103,36 @@ namespace SimComLib
                 return _connection_Status;
             }
         }
+        public static SimCom_Log_Level StringToLogLevel(string value) {
+            switch (value.ToLower())
+            {
+                case "none": return SimCom_Log_Level.None;
+                case "critical": return SimCom_Log_Level.Critical;
+                case "error": return SimCom_Log_Level.Error;
+                case "warning": return SimCom_Log_Level.Warning;
+                case "info": return SimCom_Log_Level.Info;
+                case "debug": return SimCom_Log_Level.Debug;
+                case "trace": return SimCom_Log_Level.Trace;
+                default: return SimCom_Log_Level.None;
+            }
+        }
+        public static string LogLevelToString(SimCom_Log_Level logLevel)
+        {
+            switch (logLevel)
+            {
+                case SimCom_Log_Level.None: return "NON";
+                case SimCom_Log_Level.Critical: return "CRI";
+                case SimCom_Log_Level.Error: return "ERR";
+                case SimCom_Log_Level.Warning: return "WAR";
+                case SimCom_Log_Level.Info: return "INF";
+                case SimCom_Log_Level.Debug: return "DEB";
+                case SimCom_Log_Level.Trace: return "TRA";
+                default: return "NON";
+            }
+        }
         public int ConfigIndex { get { return _configIndex; } }
-        public event SimCoMConnectHandler? OnConnection;
-        private WaSim_Version? _version;
+        public event SimCoMConnectHandler OnConnection;
+        private WaSim_Version _version;
         public WaSim_Version Version { get { return _version;} }
         public WASimClient WASimclient { get { return _client; } }
         public SimCom(uint clientID)
@@ -164,6 +205,41 @@ namespace SimComLib
         }
 
 
+        //  GetVariable(...)
+        //  VarType         Optional. Char    - Defines the variable VarType.
+        //  Name            Required. String  - Name of the Variable or Full Reverse Polish Notation calculations.
+        //  Index           Optional. Integer - Some variables use an additional index. For example: A:NAV OBS:1 (Nav radio 1)
+        //  Units           Optional. String  - Units of the variable. For example: degrees, feet, knots, (See Simconnect SDK). Default units is "NUMBER"
+        //  ValueType       Optional. String  - Type of the value returned. INT8, INT16, INT32, INT64, FLOAT, DOUBLE. Default type is DOUBLE
+        //  Interval        Optional. Integer - Interval in milliseconds to monitor the variable. Default is 0 (The variable is read once)
+        //  deltaEpsilon    Optional. Double  - The minimum change in value to trigger a notification. Default is 0 (Any change in value triggers a notification)
+        //  Alias           Optional. String - Alias for the variable. Default is the variableName.Name
+        //  Default         Optional. Dynamic - Default value for the variable. Default is null (0 for numbers, "" for strings)
+        /*
+        public SimVal GetVariable(char VarType, string Name, int Index, string Units, string ValueType, int Interval, double deltaEpsilon, string Alias = "", dynamic Default = null)
+        {
+            SimVal simVal;
+            string fullName = $"{VarType}:{Name}";
+            if (Index > 0 && Index < 255) fullName += ":" + Index.ToString();  //  _indexes are never 255 (I think)
+
+            try
+            {
+                simVal = simValNames[lookupSimVal.FullName];
+            }
+            catch (KeyNotFoundException)
+            {
+                simVal = lookupSimVal;
+                //Different ways to look up
+                simValIDs.Add(definitionIndex, simVal);
+                simValNames.Add(simVal.FullName, simVal);
+                //simValFullNames.Add(simVal.FullName, simVal);
+                init = true;
+            }
+
+            return null;
+        }
+        */
+
         //  GetVariable The variableName string consist of 7 parts: VarType:Name:Index,Units,ValueType,Interval,deltaEpsilon
         //
         //  Example: "A:NAV OBS:1,degrees,type,1000,0.1"
@@ -174,7 +250,7 @@ namespace SimComLib
         //  Units           Optional. String  - Units of the variable. For example: degrees, feet, knots, (See Simconnect SDK). Default units is "NUMBER"
         //  ValueType       Optional. String  - Type of the value returned. INT8, INT16, INT32, INT64, FLOAT, DOUBLE. Default type is DOUBLE
         //  Interval        Optional. Integer - Interval in milliseconds to monitor the variable. Default is 0 (The variable is read once)
-        //  deltaEpsilon    Optional. Float   - The minimum change in value to trigger a notification. Default is 0 (Any change in value triggers a notification)
+        //  deltaEpsilon    Optional. Double  - The minimum change in value to trigger a notification. Default is 0 (Any change in value triggers a notification)
         //
         //  Alias           Optional. String - Alias for the variable. Default is the variableName.Name
         //  Default         Optional. Dynamic - Default value for the variable. Default is null (0 for numbers, "" for strings)
@@ -183,6 +259,7 @@ namespace SimComLib
             SimVal simVal;
             bool init = false;
             SimVal lookupSimVal = new SimVal(this, variableName, definitionIndex, Alias, Default);
+            lookupSimVal.OnChanged += SimVal_OnChanged;
             try
             {
                 simVal = simValNames[lookupSimVal.FullName];
@@ -272,12 +349,18 @@ namespace SimComLib
             }
 
             getVariableValue(simVal);
+            /*
             if (init)
             {
-                simVal.OldValue = simVal.Value;
                 DoOnDataReceived(simVal);
             }
+            */
             return simVal;
+        }
+
+        private void SimVal_OnChanged(SimCom SimCom, SimVal SimVal)
+        {
+            this.OnDataChanged?.Invoke(this, SimVal);
         }
 
         public SimVal SetVariable(SimVal simVal, dynamic value)
@@ -287,7 +370,7 @@ namespace SimComLib
             {
                 // WASimCommander can't set strings yet.
             }
-            else
+            else if (!simVal.IsRPN)
             {
                 hr = _client.setVariable(simVal.VariableRequest, value);
                 switch (hr)
@@ -334,7 +417,7 @@ namespace SimComLib
             if (simVal.IsRPN)
             {
                 var answer = Calc(simVal.Name);
-                simVal.setValue(answer);
+                simVal.SetValue(answer);
             }
             else
             {
@@ -349,7 +432,7 @@ namespace SimComLib
                             case HR.NOT_CONNECTED: setConnectionStatus(SimCom_Connection_Status.CONNECTION_FAILED); break;
                             default: throw new SimCom_Exception($"Failed to get variable {simVal.VariableRequest.variableName} {hr.ToString()}", hr);
                         }
-                        simVal.setValue(varResult);
+                        simVal.SetValue(varResult);
                     }
                     else
                     {
@@ -363,12 +446,12 @@ namespace SimComLib
 
                         switch (simVal.ValueType)
                         {
-                            case WaSim_ValueTypes.INT8:  simVal.setValue((SByte)varResult); break;
-                            case WaSim_ValueTypes.INT16: simVal.setValue((Int16)varResult); break;
-                            case WaSim_ValueTypes.INT32: simVal.setValue((Int32)varResult); break;
-                            case WaSim_ValueTypes.INT64: simVal.setValue((Int64)varResult); break;
-                            case WaSim_ValueTypes.FLOAT: simVal.setValue((float)varResult); break;
-                            case WaSim_ValueTypes.DOUBLE: simVal.setValue((double)varResult); break;
+                            case WaSim_ValueTypes.INT8:  simVal.SetValue((SByte)varResult); break;
+                            case WaSim_ValueTypes.INT16: simVal.SetValue((Int16)varResult); break;
+                            case WaSim_ValueTypes.INT32: simVal.SetValue((Int32)varResult); break;
+                            case WaSim_ValueTypes.INT64: simVal.SetValue((Int64)varResult); break;
+                            case WaSim_ValueTypes.FLOAT: simVal.SetValue((float)varResult); break;
+                            case WaSim_ValueTypes.DOUBLE: simVal.SetValue((double)varResult); break;
                         }
                     }
                 }
@@ -400,8 +483,7 @@ namespace SimComLib
         {
             dynamic localValue;
             localValue = Calc($"({simVal.FullName})", (simVal.Units == "STRING"));
-            simVal.OldValue = simVal.Value;
-            simVal.setValue(localValue);
+            simVal.SetValue(localValue);
             return true;
         }
 
@@ -425,10 +507,7 @@ namespace SimComLib
                 simVal = simValIDs[dr.requestId];
                 if (simVal != null)
                 {
-                    simVal.OldValue = simVal.Value;
-                    simVal.setValue(value);
-                    simVal.DoOnChanged();
-                    DoOnDataReceived(simVal);
+                    simVal.SetValue(value);
                 }
             }
             catch (KeyNotFoundException)
@@ -441,8 +520,7 @@ namespace SimComLib
         {
             if (simVal != null)
             {
-                //Console.WriteLine(simVal.FullName);
-                if (!simVal.Initialised || simVal.OldValue != simVal.Value)
+                if (!simVal.Initialised || simVal.Value != simVal.NewValue)
                 {
                     OnDataChanged?.Invoke(this, simVal);
                 }
@@ -450,14 +528,14 @@ namespace SimComLib
             }
         }
 
-        private void Log(string LogText)
+        public void Log(SimCom_Log_Level logLevel, string LogText)
         {
-            OnLogEvent?.DynamicInvoke(this, new LogEventArgs(LogText));
+            OnLogEvent?.DynamicInvoke(this, new LogEventArgs(logLevel, LogText));
         }
 
         private void _client_OnClientEvent(ClientEvent ev)
         {
-            Log($"Client event {ev.eventType} - \"{ev.message}\"; Client status: {ev.status}");
+            Log(SimCom_Log_Level.Info, $"Client event {ev.eventType} - \"{ev.message}\"; Client status: {ev.status}");
         }
 
         private void _eventReceiver_OnEvent(SimVal SimVal, EventArgs e)

@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.FlightSimulator.SimConnect;
 using System.Diagnostics;
+using WASimCommander.CLI.Enums;
 
 namespace SimComLib
 {
@@ -69,15 +70,14 @@ namespace SimComLib
             {
                 if (_simConnect == null)
                 {
-                    Log($"Connecting SimConnectEventReceiver to configIndex {_configIndex} ...");
+                    Log(SimCom_Log_Level.Info ,$"Connecting SimConnectEventReceiver to configIndex {_configIndex} ...");
                     _simConnect = new SimConnect("SimComEventReceiver_" + _clientID.ToString(), IntPtr.Zero, WM_USER_SIMCONNECT, _scReady, (uint)Math.Max(0,_configIndex));
                     _simConnect.OnRecvOpen += new SimConnect.RecvOpenEventHandler(SimConnect_OnRecvOpen);
                     _simConnect.OnRecvQuit += new SimConnect.RecvQuitEventHandler(simConnect_OnRecvQuit);
                     _simConnect.OnRecvEvent += new SimConnect.RecvEventEventHandler(simConnect_OnRecvEvent);
                     _connecting = true;
                     this._messageWaitTask = Task.Run(this.ReceiveMessages);
-                    //_scQuit.Reset();
-                    Log("messageWaitTask Timeout.");
+                    Log(SimCom_Log_Level.Error, "messageWaitTask Timeout.");
                     return true;
                 }
             }
@@ -106,7 +106,7 @@ namespace SimComLib
                 while (_messageWaitTask.Status == TaskStatus.Running && sw.ElapsedMilliseconds <= MSG_RCV_WAIT_TIME_MS)
                     Thread.Sleep(2);
                 if (_messageWaitTask.Status == TaskStatus.Running)
-                    Log("Message wait task timed out while stopping.");
+                    Log(SimCom_Log_Level.Error, "Message wait task timed out while stopping.");
                 try { _messageWaitTask.Dispose(); }
                 catch { }// ignore in case it hung
             }
@@ -119,7 +119,7 @@ namespace SimComLib
                 }
                 catch (Exception e)
                 {
-                    Log("Exception while trying to dispose SimConnect client.");
+                    Log(SimCom_Log_Level.Error, "Exception while trying to dispose SimConnect client.");
                 }
             }
             _simConnect = null;
@@ -136,7 +136,7 @@ namespace SimComLib
 
         private void ReceiveMessages()
         {
-            Log("ReceiveMessages task started.");
+            Log(SimCom_Log_Level.Info, "ReceiveMessages task started.");
             int sig;
             var waitHandles = new WaitHandle[] { _scReady, _scQuit };
             try
@@ -153,21 +153,21 @@ namespace SimComLib
             }  // ignore but exit
             catch (Exception e)
             {
-                Log($"ReceiveMessages task exception {e.HResult}, disconnecting.");
+                Log(SimCom_Log_Level.Error, $"ReceiveMessages task exception {e.HResult}, disconnecting.");
                 Task.Run(Disconnect);  // async to avoid deadlock
                                        // COMException (0xC000014B) = broken pipe (sim crashed/network loss on a Pipe type connection)
             }
-            Log("ReceiveMessages task stopped.");
+            Log(SimCom_Log_Level.Info, "ReceiveMessages task stopped.");
         }
 
-        private void Log(string LogText)
+        private void Log(SimCom_Log_Level logLevel ,string LogText)
         {
-            OnLogEvent?.DynamicInvoke(this, new LogEventArgs(LogText));
+            OnLogEvent?.DynamicInvoke(this, new LogEventArgs(logLevel, LogText));
         }
 
         private void SimConnect_OnRecvOpen(SimConnect sender, SIMCONNECT_RECV_OPEN data)
         {
-            Log("OnRecvOpen");
+            Log(SimCom_Log_Level.Info, "OnRecvOpen");
             _connected = true;
             OnConnection?.Invoke(this, _connected, new EventArgs());
             registerSimEvents();
@@ -175,7 +175,7 @@ namespace SimComLib
 
         private void simConnect_OnRecvQuit(SimConnect sender, SIMCONNECT_RECV data)
         {
-            Log("OnRecvquit");
+            Log(SimCom_Log_Level.Info, "OnRecvquit");
             _connected = false;
             OnConnection?.Invoke(this, _connected, new EventArgs());
         }
@@ -183,8 +183,8 @@ namespace SimComLib
         private void simConnect_OnRecvEvent(SimConnect sender, SIMCONNECT_RECV_EVENT recEvent)
         {
             SimVal simVal = simEventVals[(uint)recEvent.uEventID];
-            Log($"OnRecvEvent: {simVal.FullName} ( {simVal.Value} )");
-            simVal.setValue(recEvent.dwData);
+            Log(SimCom_Log_Level.Info, $"OnRecvEvent: {simVal.FullName} ( {simVal.Value} )");
+            simVal.SetValue(recEvent.dwData);
             OnEvent?.Invoke(simVal, new EventArgs());
         }
 

@@ -25,6 +25,8 @@ namespace SimComLib
         private string _fullName;
         private bool _isRPN;
         private dynamic _value;
+        private dynamic _newValue;
+        private dynamic _delta;
         private bool _initialised = false;
         private double _lastHighSpeedAdjustValue = 0;
         private double _lastHighSpeedTime;
@@ -63,16 +65,18 @@ namespace SimComLib
             else
             {
                 splitVariableName(variableName, out _varType, out _name, out _index, out _units, out _valueType, out _interval, out _deltaEpsilon);
+                _simCom.Log(SimCom_Log_Level.Debug, $"varName: {variableName} varType: {_varType} name: {_name}");
+                _simCom.Log(SimCom_Log_Level.Debug, $"index: {_index} units: {_units} valueType: {_valueType} interval: {_interval} delta: {_deltaEpsilon}");
                 if (_units == "STRING")
                 {
-                    OldValue = new string(Default != null? Default : "");
                     _value = new string(Default != null ? Default : "");
+                    _newValue = new string(Default != null ? Default : "");
                 }
                 else
                 {
                     double val = Default != null ? Default : 0;
-                    OldValue = val;
                     _value = val;
+                    _newValue = val;
                 }
                 if (_units == "") _units = "number";
                 _nameIndex = (_index > 0 && _index < 255) ? _name + ':' + _index.ToString() : _name;
@@ -97,30 +101,47 @@ namespace SimComLib
         public uint Interval { get { return _interval; } }
         public double DeltaEpsilon { get { return _deltaEpsilon; } }
         public bool IsRPN { get { return _isRPN; } }
-        public void setValue(dynamic value) //temp test
-        {
-            _value = value;
-        }
         public dynamic Value { get { return _value; } }
-        public dynamic OldValue;
-        public string Text {  get { return Value.ToString(); } }
+        public dynamic NewValue { get { return _newValue; } }
+        public dynamic Delta { get { return _delta; } }
+
+        public string Text {  get { return _value.ToString(); } }
         public string Format(string format = "", double displayScaler = 1)
         {
-            return String.Format(format, Value * displayScaler);
+            return String.Format(format, _value * displayScaler);
         }
         public bool Initialised { get { return _initialised; } }
-
         public dynamic Set()
         {
-            return Set(Value);
+            _simCom.SetVariable(this, _value);
+            return _value;
         }
 
-        public dynamic Set(dynamic Value)
+        public dynamic SetValue(dynamic value) //temp test
         {
-            _simCom.SetVariable(this, Value);
-            OldValue = _value;
-            _value = Value;
-            return Value;
+            if (NewValue != value)
+            {
+                if (_units != "STRING") _delta = value - _value;
+                else _delta = (double)0;
+                _value = value;
+                DoOnChanged();
+                _newValue = value;
+            }
+            return _value;
+        }
+
+        public dynamic Set(dynamic NewValue)
+        {
+            if (NewValue != _value)
+            {
+                if (_units != "STRING") _delta = NewValue - _value;
+                else _delta = (double)0;
+                _value = NewValue;
+                //_newValue = NewValue;
+                _simCom.SetVariable(this, NewValue);
+                DoOnChanged();
+            }
+            return _value;
         }
 
         public dynamic Adj(dynamic Value)
@@ -129,8 +150,9 @@ namespace SimComLib
         }
 
         //  This is a rather powerful value adjust function designed to be used with rotary encoders that return relative change.
-        //  The Rotary encoder is expected to send an integer representing the number of steps it turned since the last report.
+        //  The Rotary encoder is expected to send a number (adjustValue) representing the number of steps it turned since the last report.
         //  this value is either negative (CCW) or positive (CW). The magnitude of the value represents how fast the knob was turned.
+        //  between USB hardware reports.
         //  
         //  This function makes use of this speed indication and allows for a slow and fast mode.
         //  Depending on the mode slow or fast multipliers and rounding targets are used.

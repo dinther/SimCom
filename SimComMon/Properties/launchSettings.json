@@ -2,8 +2,8 @@
   "profiles": {
     "SimComMon": {
       "commandName": "Project",
-      "commandLineArgs1": "--PLANE LATITUDE,degrees=-37.0171754 --PLANE LONGITUDE,degrees=174.7676331 --PLANE HEADING DEGREES MAGNETIC,degrees=50",
-      "commandLineArgs": "--TITLE,string --A:NAV OBS:1,degrees,25,1 --AUTOPILOT HEADING LOCK DIR,Degrees,INT32=123 --HEADING INDICATOR,degrees, 25, 0.1  as HDG"
+      "commandLineArgs": "--(A:AUTOPILOT ALTITUDE LOCK VAR,feet) 1000 + (>K:AP_ALT_VAR_SET_ENGLISH) (>H:AP_KNOB_Up)=4000",
+      "commandLineArgs1": "--PLANE LATITUDE,degrees=-37.0171754 --PLANE LONGITUDE,degrees=174.7676331 --PLANE HEADING DEGREES MAGNETIC,degrees=50"
     }
   }
 }

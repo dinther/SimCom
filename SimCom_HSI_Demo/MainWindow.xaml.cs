@@ -194,8 +194,8 @@ namespace SimCom_HSI_Demo
         private void renderGear()
         {
             UpOff.Visibility = GearPos.Value < 0.2 ? Visibility.Visible : Visibility.Hidden;
-            DownTrans.Visibility = GearPos.Value != 3 && GearPos.Value - GearPos.OldValue > 0 ? Visibility.Visible : Visibility.Hidden;
-            UpTrans.Visibility = GearPos.Value > 0.2 && GearPos.Value - GearPos.OldValue < 0 ? Visibility.Visible : Visibility.Hidden;
+            DownTrans.Visibility = GearPos.Value != 3 && GearPos.Delta > 0 ? Visibility.Visible : Visibility.Hidden;
+            UpTrans.Visibility = GearPos.Value > 0.2 && GearPos.Delta < 0 ? Visibility.Visible : Visibility.Hidden;
             DownLocked.Visibility = GearPos.Value > 2.8 ? Visibility.Visible : Visibility.Hidden;
         }
 
