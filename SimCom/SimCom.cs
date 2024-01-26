@@ -464,10 +464,11 @@ namespace SimComLib
             return true;
         }
 
-        public dynamic Calc(string calcCode, bool isString = false)
+        public dynamic Calc(string calcCode, double value = 0, bool isString = false)
         {
             if (calcCode != "")
             {
+                calcCode = calcCode.Replace("{value}", value.ToString());
                 HR hr = _client.executeCalculatorCode(calcCode, CalcResultType.Double, out double fResult, out string sResult);
                 switch (hr)
                 {
@@ -491,7 +492,7 @@ namespace SimComLib
         private bool getCalculatedVariable(SimVal simVal)
         {
             dynamic localValue;
-            localValue = Calc($"({simVal.FullName})", (simVal.Units == "STRING"));
+            localValue = Calc($"({simVal.FullName})", 0, (simVal.Units == "STRING"));
             simVal.SetValue(localValue);
             return true;
         }
