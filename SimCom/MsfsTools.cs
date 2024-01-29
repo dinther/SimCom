@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.IO;
+using Newtonsoft.Json;
 
 
 //  SimCom is a wrapper around WASimCommander and SimConnect designed to make the API easier to use.
@@ -16,7 +17,7 @@ namespace SimComLib
 {
     //  Enumeration for the various possible Flight Simulator installation origins.
     //  This information is important to determine the location of the Community folder
-    public enum FlightSimulatorOrigin
+    public enum MSFSOrigin
     {
         Steam,
         XBox,
@@ -24,31 +25,38 @@ namespace SimComLib
         Custom
     }
 
-    public enum ModuleInstallResult
+    public enum MSFSCheckResult
     {
         Present,
         Installed,
         RestartRequired,
         CommunityFolderNotFound,
-        FlightSimulatorNotFound,
-        Failed,
+        RegistryEntryNotFound,
+        MSFSNotFound,
+        ModuleNoFound,
+        SourceModuleNotFound,
+        ModuleUpdateRequired,
+        ManifestNotFound,
+        LayoutNotFound,
+        LayoutIntegrityCheckFailed,
+        InstallFailed,
+        ModulePresent
     }
 
-    public class FlightSimulatorInstallInfo
+    public class MSFSInfo
     {
-        public FlightSimulatorOrigin flightSimulatorOrigin;
+        public MSFSOrigin msfsOrigin;
         public string installLocation = "";
         public string communityFolder = "";
-        public bool isRunning = false;
     }
-    
-    //  FlightSimulatorInstal is a static helper class to determine the location of the Flight Simulator installation.
-    public static class FlightSimulatorInstal
+
+    //  MsfsTools is a static helper class that provides tools to verify and install community modules.
+    public static class MSFSTools
     {
         //  getInfo returns a FlightSimulatorInstalInfo object containing details of the Flight Simulator installation.
         //  If x86Platform is true, the 32-bit registry is searched, otherwise the 64-bit registry is searched.
         //  If the Flight Simulator installation is not found, null is returned.
-        public static FlightSimulatorInstallInfo getInfo(bool x86Platform = true)
+        public static MSFSInfo getInfo(bool x86Platform = true)
         {
             string matchDisplayName = "MICROSOFT FLIGHT SIMULATOR";
             string uninstallKey = string.Empty;
@@ -65,42 +73,39 @@ namespace SimComLib
                     {
                         if (sk.GetValue("installLocation") != null)
                         {
-                            FlightSimulatorInstallInfo flightSimulatorInstallInfo = new FlightSimulatorInstallInfo();
-                            flightSimulatorInstallInfo.installLocation = sk.GetValue("installLocation").ToString();
+                            MSFSInfo msfsInstallInfo = new MSFSInfo();
+                            msfsInstallInfo.installLocation = sk.GetValue("installLocation").ToString();
 
-                            //  Let's also see if the sim is currently running
-                            flightSimulatorInstallInfo.isRunning = isRunning();//  (System.Diagnostics.Process.GetProcessesByName("FlightSimulator").Length > 0);
-
-                            if (flightSimulatorInstallInfo.installLocation.IndexOf("steamapps") > -1)
+                            if (msfsInstallInfo.installLocation.IndexOf("steamapps") > -1)
                             {
                                 string steamCommunityPath = Environment.ExpandEnvironmentVariables(@"%UserProfile%\AppData\Roaming\Microsoft Flight Simulator\Packages\Community");
                                 if (Directory.Exists(steamCommunityPath))
                                 {
-                                    flightSimulatorInstallInfo.communityFolder = steamCommunityPath;
-                                    flightSimulatorInstallInfo.flightSimulatorOrigin = FlightSimulatorOrigin.Steam;
-                                    return flightSimulatorInstallInfo;
+                                    msfsInstallInfo.communityFolder = steamCommunityPath;
+                                    msfsInstallInfo.msfsOrigin = MSFSOrigin.Steam;
+                                    return msfsInstallInfo;
                                 }
                             }
 
                             string xboxCommunityPath = Environment.ExpandEnvironmentVariables(@"%UserProfile%\AppData\Local\Packages\Microsoft.FlightSimulator_8wekyb3d8bbwe\LocalCache\Packages\Community");
                             if (Directory.Exists(xboxCommunityPath))
                             {
-                                flightSimulatorInstallInfo.communityFolder = xboxCommunityPath;
-                                flightSimulatorInstallInfo.flightSimulatorOrigin = FlightSimulatorOrigin.XBox;
-                                return flightSimulatorInstallInfo;
+                                msfsInstallInfo.communityFolder = xboxCommunityPath;
+                                msfsInstallInfo.msfsOrigin = MSFSOrigin.XBox;
+                                return msfsInstallInfo;
                             }
                                 
                             string retailCommunityPath = Environment.ExpandEnvironmentVariables(@"%UserProfile%\AppData\Local\Packages\Microsoft.FlightSimulator_8wekyb3d8bbwe\LocalCache\Packages\Community");
                             if (Directory.Exists(retailCommunityPath))
                             {
-                                flightSimulatorInstallInfo.communityFolder = retailCommunityPath;
-                                flightSimulatorInstallInfo.flightSimulatorOrigin = FlightSimulatorOrigin.Retail;
-                                return flightSimulatorInstallInfo;
+                                msfsInstallInfo.communityFolder = retailCommunityPath;
+                                msfsInstallInfo.msfsOrigin = MSFSOrigin.Retail;
+                                return msfsInstallInfo;
                             }
 
-                            flightSimulatorInstallInfo.communityFolder = Path.Combine(flightSimulatorInstallInfo.installLocation, "/Community");
-                            flightSimulatorInstallInfo.flightSimulatorOrigin = FlightSimulatorOrigin.Custom;
-                            return flightSimulatorInstallInfo;
+                            msfsInstallInfo.communityFolder = Path.Combine(msfsInstallInfo.installLocation, "/Community");
+                            msfsInstallInfo.msfsOrigin = MSFSOrigin.Custom;
+                            return msfsInstallInfo;
                         }
                     }
                 }
@@ -130,35 +135,111 @@ namespace SimComLib
             return -1;
         }
 
+        //  Obtains the manifest from the given file as a ModuleManifest object.
+        //  The major_Version, minor_Version and revision fields are also set from the versionData field for easier access.
+        public static ModuleManifest loadManifestFromFile(string filePath)
+        {
+            ModuleManifest manifest = null;
+            if (File.Exists(filePath))
+            {
+                manifest = JsonConvert.DeserializeObject<ModuleManifest>(File.ReadAllText(@filePath), new JsonSerializerSettings
+                {
+                    MaxDepth = 8
+                });
+                string[] versionData = manifest.package_version.Split('.');
+                if (versionData.Length == 2)
+                {
+                    manifest.major_Version = int.Parse(versionData[0]);
+                    manifest.minor_Version = int.Parse(versionData[1]);
+                    manifest.revision = int.Parse(versionData[2]);
+                }
+            }
+            return manifest;
+        }
+
+        //  Obtains the manifest from the given file as a ModuleManifest object.
+        //  The major_Version, minor_Version and revision fields are also set from the versionData field for easier access.
+        public static ModuleLayout loadLayoutFromFile(string filePath)
+        {
+            ModuleLayout moduleLayout = null;
+            if (File.Exists(filePath))
+            {
+                moduleLayout = JsonConvert.DeserializeObject<ModuleLayout>(File.ReadAllText(@filePath), new JsonSerializerSettings
+                {
+                    MaxDepth = 8
+                });
+            }
+            return moduleLayout;
+        }
+
+        //  checks to confirm that all files listed in the layout are present in the module folder.
+        public static bool CheckLayoutIntegrity(ModuleLayout layout, string moduleFolder)
+        {
+            foreach (ModuleLayoutContentItem item in layout.content)
+            {
+                string itemPath = Path.Combine(moduleFolder, item.path);
+                if (File.Exists(itemPath))
+                {
+                    FileInfo fileInfo = new FileInfo(itemPath);
+                    if (fileInfo.Length != item.size)
+                    {
+                        return false;
+                    }
+                    if (fileInfo.LastWriteTime != new System.DateTime(item.date))
+                    {
+                        return false;
+                    }
+                } else
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
+
         //  installModule installs a module into the Community folder of the Flight Simulator installation.
         //  moduleName is assumed to be a folder name in the same folder as the executable.
         //  All files in the folder and subfolders are copied to the Community folder if newer.
-        public static ModuleInstallResult installModule(string moduleName)
+        public static MSFSCheckResult installModule(string moduleName)
         {
-            FlightSimulatorInstallInfo fsInfo = getInfo(true);
+            MSFSInfo fsInfo = getInfo(true);
             if (fsInfo == null) getInfo(false);
             if (fsInfo == null)
             {
                 Console.WriteLine("Registry search failed.");
-                return ModuleInstallResult.Failed;
+                return MSFSCheckResult.InstallFailed;
             }
             else
             {
                 if (fsInfo.installLocation == "")
                 {
                     Console.WriteLine("Flight Simulator installation not found.");
-                    return ModuleInstallResult.FlightSimulatorNotFound;
+                    return MSFSCheckResult.MSFSNotFound;
                 }
                 if (fsInfo.communityFolder == "")
                 {
                     Console.WriteLine("Community folder not found.");
-                    return ModuleInstallResult.CommunityFolderNotFound;
+                    return MSFSCheckResult.CommunityFolderNotFound;
                 }
                 string sourcePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, moduleName);
                 string destinationPath = Path.Combine(fsInfo.communityFolder, moduleName);
                 bool copiedFiles = CopyFolder(sourcePath, destinationPath);
-                return copiedFiles && isRunning() ? ModuleInstallResult.RestartRequired : ModuleInstallResult.Installed;
+                return copiedFiles && SimIsRunning() ? MSFSCheckResult.RestartRequired : MSFSCheckResult.Installed;
             }
+        }
+
+        //  Compares the version of the existing module with the version of the new module.
+        //  Returns 0 if the versions are the same, 1 if the existing module is newer, -1 if the new module is newer.
+        public static int CompareManifestVersion(ModuleManifest existingModule, ModuleManifest newModule)
+        {
+            if (existingModule == null || newModule == null) return 0;
+            if (existingModule.major_Version > newModule.major_Version) return 1;
+            if (existingModule.major_Version < newModule.major_Version) return -1;
+            if (existingModule.minor_Version > newModule.minor_Version) return 1;
+            if (existingModule.minor_Version < newModule.minor_Version) return -1;
+            if (existingModule.revision > newModule.revision) return 1;
+            if (existingModule.revision < newModule.revision) return -1;
+            return 0;
         }
 
         private static bool CopyFolder(string sourceFolder, string destinationFolder)
@@ -205,7 +286,7 @@ namespace SimComLib
         }
 
         //  isRunning returns true if Flight Simulator is currently running as a process named FlightSimulator.
-        public static bool isRunning()
+        public static bool SimIsRunning()
         {
             return (System.Diagnostics.Process.GetProcessesByName("FlightSimulator").Length > 0);
         }

@@ -145,7 +145,7 @@ namespace SimComLib
         public SimCom(uint clientID)
         {
             _clientID = clientID;
-            _configIndex = FlightSimulatorInstal.getConfigIndex();
+            _configIndex = MSFSTools.getConfigIndex();
             _client = new WASimClient(_clientID);
             _client.OnClientEvent += _client_OnClientEvent;
             _client.OnDataReceived += _client_OnDataReceived;
